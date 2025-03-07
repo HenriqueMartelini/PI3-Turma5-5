@@ -1,47 +1,22 @@
 package com.puc.superid
-
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.puc.superid.ui.theme.SuperidTheme
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            SuperidTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+
+        val db = FirebaseFirestore.getInstance()
+        val testDoc = db.collection("test").document("check")
+
+        testDoc.set(mapOf("status" to "success"))
+            .addOnSuccessListener {
+                Log.d("FirebaseTest", "Firestore está funcionando corretamente!")
             }
-        }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SuperidTheme {
-        Greeting("Android")
+            .addOnFailureListener { e ->
+                Log.e("FirebaseTest", "Erro ao acessar Firestore", e)
+            }
     }
 }
