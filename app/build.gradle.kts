@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.puc.superid"
-        minSdk = 24
+        minSdk = 32
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -52,6 +52,11 @@ android {
 }
 
 dependencies {
+    implementation (libs.ui)
+    implementation (libs.androidx.material)
+    implementation (libs.ui.tooling.preview)
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.activity.compose.v160)
     implementation(libs.androidx.compiler)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
