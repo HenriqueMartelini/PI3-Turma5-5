@@ -30,7 +30,6 @@ class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize ViewModel
         signUpViewModel = ViewModelProvider(this).get(SignUpViewModel::class.java)
 
         setContent {

@@ -12,9 +12,9 @@ class SignUpViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 FirebaseUtils.registerUserInFirestore(name, email, password, imei, context)
-                onSuccess()  // Chama callback de sucesso após registro
+                onSuccess()
             } catch (e: Exception) {
-                onFailure(e.message ?: "Erro desconhecido")  // Chama callback de erro em caso de falha
+                onFailure(e.message ?: "Erro desconhecido")
             }
         }
     }
