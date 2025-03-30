@@ -10,18 +10,40 @@ import com.puc.superid.data.model.User
 import com.puc.superid.data.repository.UserRepository
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Classe que contém métodos do Firebase.
+ */
 object FirebaseUtils {
 
+    /**
+     * Registra um novo usuário no Firebase Authentication e salva seus dados no Firestore
+     *
+     * Método responsável pelas seguitnes funções:
+     * 1. Criação do usuário no Firebase Authentication usando email e senha
+     * 2. Criptografar a senha antes de salvar no Firestore
+     * 3. Salva os dados do usuário no Firestore
+     *
+     * @param name Nome do usuário
+     * @param email Email do usuário.
+     * @param password Senha do usuário
+     * @param imei IMEI do dispositivo do usuário
+     * @param context Contexto da aplicação
+     * @throws FirebaseAuthException Lançado se ocorrer um erro ao criar o usuário no Firebase Authentication
+     * @throws Exception Lançado se ocorrer qualquer outro erro ao salvar o usuário
+     */
     suspend fun registerUserInFirestore(name: String, email: String, password: String, imei: String, context: Context) {
         val auth = FirebaseAuth.getInstance()
         val firestore = FirebaseFirestore.getInstance()
 
         try {
+            // Cria o usuário no Firebase Authentication com o email e senha inseridos
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val uid = authResult.user?.uid.orEmpty()
 
+            // Criptografa a senha antes de armazenar no Firestore
             val hashedPassword = StringUtils.hashPassword(password)
 
+            // Cria um objeto User com as informações do usuário
             val user = User(
                 uid = uid,
                 name = name,
@@ -30,16 +52,20 @@ object FirebaseUtils {
                 password = hashedPassword
             )
 
+            // Cria a instância de UserDataSource e UserRepository para salvar os dados no Firestore
             val userDataSource = UserDataSource(firestore)
             val userRepository = UserRepository(userDataSource)
 
+            // Salva o usuário no Firestore
             userRepository.createUser(user)
 
             Log.d("FirebaseUtils", "Usuário registrado com sucesso.")
         } catch (e: FirebaseAuthException) {
+            // Loga o erro se houver falha na criação do usuário no Firebase Authentication
             Log.e("FirebaseUtils", "Erro ao criar usuário no Firebase Authentication: ${e.message}")
             throw e
         } catch (e: Exception) {
+            // Loga erros inesperados e lança a exceção
             Log.e("FirebaseUtils", "Erro ao salvar o usuário: ${e.message}")
             throw e
         }
