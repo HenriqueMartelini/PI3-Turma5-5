@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.google.firebase.auth.FirebaseAuth
 import com.puc.superid.ui.MainScreen
+import com.puc.superid.ui.OnboardingActivity
 import com.puc.superid.ui.registration.SignUpActivity
 import com.puc.superid.ui.theme.SuperidTheme
 
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
 
         // Se o usuário não estiver autenticado, redireciona para a tela de cadastro
         if (currentUser == null) {
-            startActivity(Intent(this, SignUpActivity::class.java))
+            startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
         } else {
             // Caso o usuário já esteja autenticado, direciona para a tela principal

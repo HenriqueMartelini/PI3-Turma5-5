@@ -29,7 +29,15 @@
         <activity
             android:name=".ui.registration.SignUpActivity"
             android:exported="true"
-            android:theme="@style/Theme.Superid"/>
+            android:theme="@style/Theme.Superid" />
+
+        <activity
+            android:name=".ui.OnboardingActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Superid" />
+
+        <activity android:name=".ui.terms.TermsActivity" />
+
     </application>
 
 </manifest>
