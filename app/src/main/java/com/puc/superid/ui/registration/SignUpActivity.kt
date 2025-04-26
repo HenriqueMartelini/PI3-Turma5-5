@@ -2,25 +2,57 @@ package com.puc.superid.ui.registration
 
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.DeviceUtils
 import com.puc.superid.utils.StringUtils
 import com.puc.superid.viewmodel.SignUpViewModel
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import com.puc.superid.R
 
 /**
  * Activity responsável pela tela de cadastro de usuário no aplicativo
@@ -28,6 +60,14 @@ import com.puc.superid.viewmodel.SignUpViewModel
  * de criação de conta e comunicação com o Firebase
  */
 class SignUpActivity : ComponentActivity() {
+
+    private val solwayFamily = FontFamily(
+        Font(R.font.solway_bold, FontWeight.Bold),
+        Font(R.font.solway_regular, FontWeight.Normal),
+        Font(R.font.solway_medium, FontWeight.Medium),
+        Font(R.font.solway_light, FontWeight.Light),
+        Font(R.font.solway_extrabold, FontWeight.ExtraBold)
+    )
 
     // Instância do FirebaseAuth utilizada para autenticação
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -60,15 +100,33 @@ class SignUpActivity : ComponentActivity() {
      *
      * @Composable Função que define a UI da tela de cadastro
      */
+
+    @Preview(showBackground = true)
+    @Composable
+    fun SignUpScreenPreview() {
+        SuperidTheme {
+            SignUpScreen()
+        }
+    }
+
     @Composable
     fun SignUpScreen() {
         var name by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var message by remember { mutableStateOf("") }
+        var isNameFocused by remember { mutableStateOf(false) }
+        var isEmailFocused by remember { mutableStateOf(false) }
+        var isPasswordFocused by remember { mutableStateOf(false) }
 
         // Contexto da aplicação, necessário para obter o IMEI
         val context = LocalContext.current
+        val focusManager = LocalFocusManager.current
+
+
+        fun unfocused(){
+            focusManager.clearFocus()
+        }
 
         /**
          * Função chamada quando o botão "Criar Conta" é pressionado. Realiza a validação dos campos e chama
@@ -99,13 +157,14 @@ class SignUpActivity : ComponentActivity() {
 
                 // Chama o ViewModel para criar a conta no Firebase
                 signUpViewModel.createAccount(
-                    name = trimmedName,
-                    email = trimmedEmail,
-                    password = trimmedPassword,
-                    imei = imei,
-                    context = context,
+                    name,
+                    trimmedEmail,
+                    trimmedPassword,
+                    imei,
+                    context,
                     onSuccess = {
-                        message = "Cadastro realizado com sucesso! Verifique seu email para validar sua conta."
+                        message =
+                            "Cadastro realizado com sucesso! Verifique seu e-mail para validar sua conta."
                     },
                     onFailure = { errorMessage ->
                         message = errorMessage
@@ -116,30 +175,214 @@ class SignUpActivity : ComponentActivity() {
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Brush.verticalGradient(listOf(Color(0xFF020024), Color(0xFF090979))))
+                .padding(vertical = 30.dp)
+                .clickable { unfocused() },
+            contentAlignment = Alignment.TopStart,
         ) {
-            Text("Crie sua conta no SuperID", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(32.dp))
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Criar conta",
+                    style = TextStyle(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 50.sp,
+                        fontFamily = solwayFamily
+                    ),
+                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xAA4B5C8A))
+                ) {
+                    Box {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(24.dp))
 
-            TextField(value = name, onValueChange = { name = it }, label = { Text("Nome") })
-            Spacer(modifier = Modifier.height(16.dp))
-            TextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-            Spacer(modifier = Modifier.height(16.dp))
-            TextField(value = password, onValueChange = { password = it }, label = { Text("Senha Mestre") }, visualTransformation = PasswordVisualTransformation())
-            Spacer(modifier = Modifier.height(32.dp))
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val offset = Offset(5.0f, 10.0f)
+                                Text(
+                                    text = "Nome",
+                                    style = TextStyle(
+                                        color = Color.Cyan,
+                                        fontSize = 24.sp,
+                                        shadow = Shadow(
+                                            color = Color.Black,
+                                            offset = offset,
+                                            blurRadius = 8f
+                                        )
+                                    ),
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(start = 35.dp, top = 2.dp, bottom = 12.dp)
+                                )
+                            }
+                            TextField(
+                                value = name,
+                                onValueChange = { name = it },
+                                label = {
+                                    if (name.isEmpty() && !isNameFocused) {
+                                        Text("John Doe", color = Color.Gray)
+                                    }
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedContainerColor = Color(0xFFCECECE),
+                                    focusedContainerColor = Color.White
+                                ),
+                                singleLine = true,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier
+                                    .onFocusChanged { focusState ->
+                                        isNameFocused = focusState.isFocused
+                                    }
+                            )
 
-            Button(onClick = { createAccount() }) {
-                Text("Criar Conta")
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val offset = Offset(5.0f, 10.0f)
+                                Text(
+                                    text = "Email",
+                                    style = TextStyle(
+                                        color = Color.Cyan,
+                                        fontSize = 24.sp,
+                                        shadow = Shadow(
+                                            color = Color.Black,
+                                            offset = offset,
+                                            blurRadius = 8f
+                                        )
+                                    ),
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(start = 35.dp, top = 2.dp, bottom = 12.dp)
+                                )
+                            }
+                            TextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = {
+                                    if (email.isEmpty() && !isEmailFocused) {
+                                        Text("johndoe@mgail.com", color = Color.Gray)
+                                    }
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedContainerColor = Color(0xFFCECECE),
+                                    focusedContainerColor = Color.White
+                                ),
+                                singleLine = true,
+                                shape = RoundedCornerShape(16.dp), // Arredondar o TextField
+                                modifier = Modifier
+                                    .onFocusChanged { focusState ->
+                                        isEmailFocused = focusState.isFocused
+                                    }
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                val offset = Offset(5.0f, 10.0f)
+                                Text(
+                                    text = "Senha",
+                                    style = TextStyle(
+                                        color = Color.Cyan,
+                                        fontSize = 24.sp,
+                                        shadow = Shadow(
+                                            color = Color.Black,
+                                            offset = offset,
+                                            blurRadius = 8f
+                                        )
+                                    ),
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(start = 35.dp, top = 2.dp, bottom = 12.dp)
+                                )
+                            }
+                            TextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                label = {
+                                    if (password.isEmpty() && !isPasswordFocused) {
+                                        Text("password123", color = Color.Gray)
+                                    }
+                                },
+                                visualTransformation = PasswordVisualTransformation(),
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedContainerColor = Color(0xFFCECECE),
+                                    focusedContainerColor = Color.White
+                                ),
+                                singleLine = true,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier
+                                    .onFocusChanged { focusState ->
+                                        isPasswordFocused = focusState.isFocused
+                                    }
+                            )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            Button(
+                                onClick = { createAccount() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF021A4C),
+                                                Color(0xFF045DDD)
+                                            )
+                                        ),
+                                        shape = RoundedCornerShape(24.dp)
+                                    ),
+                                shape = RoundedCornerShape(24.dp),
+                                contentPadding = PaddingValues()
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    Color(0xFF021A4C),
+                                                    Color(0xFF045DDD)
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(24.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "Criar conta",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            }
+
+                            if (message.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = message,
+                                    color = if (message.contains("sucesso")) Color.Green else Color.Red
+                                )
+                            }
+                        }
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Exibe a mensagem de erro ou sucesso
-            Text(message, color = if (message.startsWith("Erro")) Color.Red else Color.Green)
         }
     }
 }
