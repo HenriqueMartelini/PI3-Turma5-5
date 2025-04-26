@@ -282,7 +282,7 @@ class SignUpActivity : ComponentActivity() {
                                     focusedContainerColor = Color.White
                                 ),
                                 singleLine = true,
-                                shape = RoundedCornerShape(16.dp), // Arredondar o TextField
+                                shape = RoundedCornerShape(16.dp),
                                 modifier = Modifier
                                     .onFocusChanged { focusState ->
                                         isEmailFocused = focusState.isFocused
