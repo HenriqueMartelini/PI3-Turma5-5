@@ -10,12 +10,24 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -24,12 +36,8 @@ import com.puc.superid.R
 import com.puc.superid.ui.registration.SignUpActivity
 import com.puc.superid.ui.terms.TermsActivity
 import kotlinx.coroutines.launch
-import kotlin.math.abs
+import kotlin.math.absoluteValue
 import androidx.compose.ui.util.lerp
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Brush
 
 class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +52,8 @@ class OnboardingActivity : ComponentActivity() {
         }
     }
 }
+
+data class OnboardingPage(val image: Int, val title: String, val description: String)
 
 @Composable
 fun OnboardingScreen(onStartClick: () -> Unit, onTermsClick: () -> Unit) {
@@ -66,123 +76,185 @@ fun OnboardingScreen(onStartClick: () -> Unit, onTermsClick: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     var termsAccepted by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF292E49), Color(0xFF536976), Color(0xFFBBD2C5))
-                )
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) { pageIndex ->
-            OnboardingPageView(pagerState, pages[pageIndex], pageIndex)
-        }
+    val solwayFamily = FontFamily(
+        Font(R.font.solway_bold, FontWeight.Bold),
+        Font(R.font.solway_regular, FontWeight.Normal),
+        Font(R.font.solway_medium, FontWeight.Medium),
+        Font(R.font.solway_light, FontWeight.Light),
+        Font(R.font.solway_extrabold, FontWeight.ExtraBold)
+    )
 
-        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            repeat(pages.size) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(
-                            if (pagerState.currentPage == index) Color(0xFF292E49) else Color(0xFFEAD4BE),
-                            shape = MaterialTheme.shapes.small
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        val currentPage = pagerState.currentPage
+        val currentOffset = pagerState.currentPageOffsetFraction
+        val alpha = lerp(0.5f, 1f, 1f - currentOffset.absoluteValue.coerceIn(0f, 1f))
+
+        Image(
+            painter = painterResource(id = pages[currentPage].image),
+            contentDescription = null,
+            contentScale = ContentScale.FillHeight,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { this.alpha = alpha }
+                .matchParentSize()
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xA3000000),
+                            Color(0xB5000000),
+                            Color(0x7A000000)
                         )
-                        .padding(4.dp)
+                    )
                 )
-            }
-        }
+        )
 
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = 24.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            Spacer(modifier = Modifier.height(48.dp))
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) { index ->
+                OnboardingPageView(
+                    page = pages[index],
+                    fontFamily = solwayFamily
+                )
+            }
+
+            Row(
+                modifier = Modifier.padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(pages.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(if (pagerState.currentPage == index) 12.dp else 8.dp)
+                            .background(
+                                color = if (pagerState.currentPage == index) Color.White else Color.LightGray,
+                                shape = RoundedCornerShape(50)
+                            )
+                    )
+                }
+            }
+
             if (pagerState.currentPage == pages.lastIndex) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
                     Checkbox(
                         checked = termsAccepted,
                         onCheckedChange = { termsAccepted = it },
-                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF292E49))
+                        colors = CheckboxDefaults.colors(
+                            uncheckedColor = Color.White,
+                            checkedColor = Color.Black
+                        ),
                     )
-                    Text(
-                        text = "Aceito os ",
-                        color = Color.White
-                    )
+                    Text(text = "Aceito os ", color = Color.White, fontSize = 14.sp)
                     Text(
                         text = "Termos de Uso",
-                        color = Color(0xFF292E49),
+                        color = Color.Cyan,
                         textDecoration = TextDecoration.Underline,
+                        fontSize = 14.sp,
                         modifier = Modifier.clickable { onTermsClick() }
                     )
                 }
             }
+
+            val isLastPage = pagerState.currentPage == pages.lastIndex
+            val isEnabled = !isLastPage || (isLastPage && termsAccepted)
+
             Button(
+                modifier = Modifier
+                    .height(48.dp)
+                    .width(150.dp),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(),
                 onClick = {
-                    if (pagerState.currentPage == pages.lastIndex) {
+                    if (isLastPage) {
                         if (termsAccepted) onStartClick()
                     } else {
-                        coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
                     }
                 },
-                enabled = pagerState.currentPage != pages.lastIndex || termsAccepted,
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF292E49))
+                enabled = isEnabled,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
             ) {
-                Text(
-                    text = if (pagerState.currentPage == pages.lastIndex) "Começar" else "Próximo",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = if (!isEnabled)
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF464647),
+                                        Color(0xFF323232)
+                                    )
+                                )
+                            else
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF021A4C),
+                                        Color(0xFF045DDD)
+                                    )
+                                ),
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isLastPage) "Começar" else "Próximo",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-fun OnboardingPageView(pagerState: PagerState, page: OnboardingPage, pageIndex: Int) {
+fun OnboardingPageView(page: OnboardingPage, fontFamily: FontFamily) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
     ) {
-        val pageOffset = pagerState.currentPageOffsetFraction
-
-        Image(
-            painter = painterResource(id = page.imageId),
-            contentDescription = null,
-            modifier = Modifier
-                .size(300.dp)
-                .graphicsLayer {
-                    val scale = lerp(0.5f, 1.0f, 1 - abs(pageOffset))
-                    scaleX = scale
-                    scaleY = scale
-                }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = page.title,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFEAD4BE)
+            fontFamily = fontFamily,
+            color = Color.White
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = page.description,
             fontSize = 18.sp,
-            color = Color(0xFFEDE0D4),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            fontWeight = FontWeight.Normal,
+            fontFamily = fontFamily,
+            color = Color(0xFFE0E0E0),
+            lineHeight = 22.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
-
-/**
- * Classe que representa uma página do onboarding.
- */
-data class OnboardingPage(val imageId: Int, val title: String, val description: String)
