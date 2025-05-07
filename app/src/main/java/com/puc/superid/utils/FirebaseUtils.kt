@@ -5,6 +5,8 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.puc.superid.data.datasource.UserDataSource
 import com.puc.superid.data.model.User
 import com.puc.superid.data.repository.UserRepository
@@ -69,5 +71,18 @@ object FirebaseUtils {
             Log.e("FirebaseUtils", "Erro ao salvar o usuário: ${e.message}")
             throw e
         }
+    }
+    fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
+        val db = Firebase.firestore
+        db.collection("loginPartner")
+            .get()
+            .addOnSuccessListener { documents ->
+                val logins = documents.map { it.getString("login") ?: "" }
+                onResult(logins)
+            }
+            .addOnFailureListener { exception ->
+                // Tratar erro
+                onResult(emptyList())
+            }
     }
 }

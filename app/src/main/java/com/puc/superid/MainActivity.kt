@@ -1,48 +1,182 @@
 package com.puc.superid
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
-import com.puc.superid.ui.MainScreen
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.puc.superid.ui.OnboardingActivity
-import com.puc.superid.ui.registration.SignUpActivity
 import com.puc.superid.ui.theme.SuperidTheme
 
 class MainActivity : ComponentActivity() {
 
-    // Instância do FirebaseAuth utilizada para verificar o status de autenticação
     private lateinit var auth: FirebaseAuth
+    private lateinit var sharedPreferences: SharedPreferences
 
-    /**
-     * Método chamado quando a Activity é criada. Verifica se o usuário está autenticado no Firebase e
-     * navega para a tela de registro ou para a tela principal do aplicativo
-     *
-     * @param savedInstanceState Estado salvo da Activity, utilizado para restaurar a UI em caso de reinicialização
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicializa o FirebaseAuth
         auth = FirebaseAuth.getInstance()
+        sharedPreferences = getSharedPreferences("AppPreferences", MODE_PRIVATE)
 
-        // Verifica o usuário atual
         val currentUser = auth.currentUser
+        val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
 
-        auth.signOut()
-
-        // Se o usuário não estiver autenticado, redireciona para a tela de cadastro
         if (currentUser == null) {
-            startActivity(Intent(this, OnboardingActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         } else {
-            // Caso o usuário já esteja autenticado, direciona para a tela principal
-            setContent {
-                SuperidTheme {
-                    MainScreen()
+            //val isFirstTime = true //Forçar o usuário ser novo para fim de testes
+            if (isFirstTime) {
+                sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
+                startActivity(Intent(this, OnboardingActivity::class.java))
+                finish()
+            } else {
+                setContent {
+                    SuperidTheme {
+                        MainScreen()
+                    }
                 }
             }
         }
+    }
+}
+
+fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
+    val db = Firebase.firestore
+    db.collection("loginPartner")
+        .get()
+        .addOnSuccessListener { documents ->
+            val docNames = documents.map { it.id }
+            onResult(docNames)
+        }
+        .addOnFailureListener {
+            onResult(emptyList())
+        }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen() {
+    val logins = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(Unit) {
+        fetchLoginPartners { fetchedLogins ->
+            logins.clear()
+            logins.addAll(fetchedLogins)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF0D0B2D), Color(0xFF0033FF))
+                )
+            )
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF0D0B2D),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text("SuperID")
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { /* Abrir Drawer */ }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* Busca */ }) {
+                            Icon(Icons.Default.Search, contentDescription = "Buscar")
+                        }
+                        IconButton(onClick = { /* Novo item */ }) {
+                            Icon(Icons.Default.Add, contentDescription = "Adicionar")
+                        }
+                    }
+                )
+            },
+            content = { paddingValues ->
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                ) {
+                    items(logins) { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFD3D3D3))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = Color.DarkGray
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = item,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+            }
+        )
     }
 }

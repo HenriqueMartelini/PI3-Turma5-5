@@ -53,7 +53,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import com.puc.superid.R
-
+import android.content.Intent
+import androidx.compose.runtime.LaunchedEffect
+import com.puc.superid.MainActivity
 /**
  * Activity responsável pela tela de cadastro de usuário no aplicativo
  * Utiliza o Jetpack Compose para criar a interface gráfica e o [SignUpViewModel] para gerenciar a lógica
@@ -118,6 +120,7 @@ class SignUpActivity : ComponentActivity() {
         var isNameFocused by remember { mutableStateOf(false) }
         var isEmailFocused by remember { mutableStateOf(false) }
         var isPasswordFocused by remember { mutableStateOf(false) }
+        var success by remember { mutableStateOf(false) }
 
         // Contexto da aplicação, necessário para obter o IMEI
         val context = LocalContext.current
@@ -126,6 +129,19 @@ class SignUpActivity : ComponentActivity() {
 
         fun unfocused(){
             focusManager.clearFocus()
+        }
+
+        if (success) {
+            LaunchedEffect(Unit) {
+                val sharedPreferences = context.getSharedPreferences("AppPreferences", MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
+
+                val mainIntent = Intent(context, MainActivity::class.java)
+                context.startActivity(mainIntent)
+                if (context is ComponentActivity) {
+                    context.finish()
+                }
+            }
         }
 
         /**
@@ -157,14 +173,14 @@ class SignUpActivity : ComponentActivity() {
 
                 // Chama o ViewModel para criar a conta no Firebase
                 signUpViewModel.createAccount(
-                    name,
+                    trimmedName,
                     trimmedEmail,
                     trimmedPassword,
                     imei,
                     context,
                     onSuccess = {
-                        message =
-                            "Cadastro realizado com sucesso! Verifique seu e-mail para validar sua conta."
+                        message = "Cadastro realizado com sucesso! Verifique seu e-mail."
+                        success = true // <- só muda o estado aqui!
                     },
                     onFailure = { errorMessage ->
                         message = errorMessage

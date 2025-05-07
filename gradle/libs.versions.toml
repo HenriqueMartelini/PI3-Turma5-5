@@ -1,9 +1,12 @@
 [versions]
 activityComposeVersion = "1.6.0"
 agp = "8.8.2"
+barcodeScanning = "17.3.0"
+cameraCore = "1.4.2"
 circleindicator = "2.1.6"
 compiler = "1.5.15"
 firebaseBom = "33.11.0"
+firebaseFirestoreKtxVersion = "24.0.0"
 foundation = "1.8.0"
 gradle = "8.0.2"
 gradleVersion = "8.0.2"
@@ -26,17 +29,24 @@ ui = "1.7.8"
 uiToolingPreview = "1.7.8"
 viewpager2 = "1.1.0"
 appcompat = "1.7.0"
+zxingAndroidEmbedded = "4.3.0"
 
 [libraries]
 androidx-activity-compose-v160 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCore" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraCore" }
 androidx-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compiler" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "foundation" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material = { module = "androidx.compose.material:material", version.ref = "material" }
+barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 circleindicator = { module = "me.relex:circleindicator", version.ref = "circleindicator" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore-ktx-v2400 = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestoreKtxVersion" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
 gradle-v800 = { module = "com.android.tools.build:gradle", version.ref = "gradleVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -61,6 +71,7 @@ ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
 androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
