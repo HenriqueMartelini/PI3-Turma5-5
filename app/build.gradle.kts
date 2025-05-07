@@ -22,7 +22,7 @@ android {
         }
     }
 
-    buildTypes {
+    /*buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -30,7 +30,8 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
+    }*/
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -73,6 +74,8 @@ dependencies {
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.appcompat)
     implementation (libs.circleindicator)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -7,28 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -52,15 +34,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import com.puc.superid.R
 import android.content.Intent
 import androidx.compose.runtime.LaunchedEffect
 import com.puc.superid.MainActivity
-/**
- * Activity responsável pela tela de cadastro de usuário no aplicativo
- * Utiliza o Jetpack Compose para criar a interface gráfica e o [SignUpViewModel] para gerenciar a lógica
- * de criação de conta e comunicação com o Firebase
- */
+import com.puc.superid.R
+import com.puc.superid.ui.login.LoginScreen
+
 class SignUpActivity : ComponentActivity() {
 
     private val solwayFamily = FontFamily(
@@ -126,8 +105,7 @@ class SignUpActivity : ComponentActivity() {
         val context = LocalContext.current
         val focusManager = LocalFocusManager.current
 
-
-        fun unfocused(){
+        fun unfocused() {
             focusManager.clearFocus()
         }
 
@@ -135,12 +113,8 @@ class SignUpActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 val sharedPreferences = context.getSharedPreferences("AppPreferences", MODE_PRIVATE)
                 sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
-
-                val mainIntent = Intent(context, MainActivity::class.java)
-                context.startActivity(mainIntent)
-                if (context is ComponentActivity) {
-                    context.finish()
-                }
+                context.startActivity(Intent(context, LoginScreen::class.java))
+                if (context is ComponentActivity) context.finish()
             }
         }
 
@@ -180,7 +154,7 @@ class SignUpActivity : ComponentActivity() {
                     context,
                     onSuccess = {
                         message = "Cadastro realizado com sucesso! Verifique seu e-mail."
-                        success = true // <- só muda o estado aqui!
+                        success = true
                     },
                     onFailure = { errorMessage ->
                         message = errorMessage
@@ -248,21 +222,14 @@ class SignUpActivity : ComponentActivity() {
                             TextField(
                                 value = name,
                                 onValueChange = { name = it },
-                                label = {
-                                    if (name.isEmpty() && !isNameFocused) {
-                                        Text("John Doe", color = Color.Gray)
-                                    }
-                                },
+                                label = { Text("Nome", color = Color.Gray) },
                                 colors = TextFieldDefaults.colors(
                                     unfocusedContainerColor = Color(0xFFCECECE),
                                     focusedContainerColor = Color.White
                                 ),
                                 singleLine = true,
                                 shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .onFocusChanged { focusState ->
-                                        isNameFocused = focusState.isFocused
-                                    }
+                                modifier = Modifier.onFocusChanged { isNameFocused = it.isFocused }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -288,21 +255,14 @@ class SignUpActivity : ComponentActivity() {
                             TextField(
                                 value = email,
                                 onValueChange = { email = it },
-                                label = {
-                                    if (email.isEmpty() && !isEmailFocused) {
-                                        Text("johndoe@mgail.com", color = Color.Gray)
-                                    }
-                                },
+                                label = { Text("Email", color = Color.Gray) },
                                 colors = TextFieldDefaults.colors(
                                     unfocusedContainerColor = Color(0xFFCECECE),
                                     focusedContainerColor = Color.White
                                 ),
                                 singleLine = true,
                                 shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .onFocusChanged { focusState ->
-                                        isEmailFocused = focusState.isFocused
-                                    }
+                                modifier = Modifier.onFocusChanged { isEmailFocused = it.isFocused }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -328,11 +288,7 @@ class SignUpActivity : ComponentActivity() {
                             TextField(
                                 value = password,
                                 onValueChange = { password = it },
-                                label = {
-                                    if (password.isEmpty() && !isPasswordFocused) {
-                                        Text("password123", color = Color.Gray)
-                                    }
-                                },
+                                label = { Text("Senha", color = Color.Gray) },
                                 visualTransformation = PasswordVisualTransformation(),
                                 colors = TextFieldDefaults.colors(
                                     unfocusedContainerColor = Color(0xFFCECECE),
@@ -340,10 +296,7 @@ class SignUpActivity : ComponentActivity() {
                                 ),
                                 singleLine = true,
                                 shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .onFocusChanged { focusState ->
-                                        isPasswordFocused = focusState.isFocused
-                                    }
+                                modifier = Modifier.onFocusChanged { isPasswordFocused = it.isFocused }
                             )
 
                             Spacer(modifier = Modifier.height(32.dp))

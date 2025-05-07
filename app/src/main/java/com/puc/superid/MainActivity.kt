@@ -6,15 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -22,18 +14,8 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,6 +25,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.puc.superid.ui.OnboardingActivity
+import com.puc.superid.ui.login.LoginScreen
 import com.puc.superid.ui.theme.SuperidTheme
 
 class MainActivity : ComponentActivity() {
@@ -60,10 +43,9 @@ class MainActivity : ComponentActivity() {
         val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
 
         if (currentUser == null) {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, LoginScreen::class.java))
             finish()
         } else {
-            //val isFirstTime = true //Forçar o usuário ser novo para fim de testes
             if (isFirstTime) {
                 sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
                 startActivity(Intent(this, OnboardingActivity::class.java))
@@ -109,7 +91,7 @@ fun MainScreen() {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D0B2D), Color(0xFF0033FF))
+                    listOf(Color(0xFF0D0B2D), Color(0xFF0033FF))
                 )
             )
     ) {
@@ -119,9 +101,7 @@ fun MainScreen() {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFF0D0B2D),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
+                        titleContentColor = Color.White
                     ),
                     title = {
                         Row(
@@ -132,15 +112,15 @@ fun MainScreen() {
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { /* Abrir Drawer */ }) {
+                        IconButton(onClick = { /* Drawer futuro */ }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Busca */ }) {
+                        IconButton(onClick = { /* Buscar */ }) {
                             Icon(Icons.Default.Search, contentDescription = "Buscar")
                         }
-                        IconButton(onClick = { /* Novo item */ }) {
+                        IconButton(onClick = { /* Adicionar */ }) {
                             Icon(Icons.Default.Add, contentDescription = "Adicionar")
                         }
                     }
@@ -151,7 +131,7 @@ fun MainScreen() {
                     modifier = Modifier
                         .padding(paddingValues)
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
+                        .padding(top = 8.dp)
                 ) {
                     items(logins) { item ->
                         Row(
