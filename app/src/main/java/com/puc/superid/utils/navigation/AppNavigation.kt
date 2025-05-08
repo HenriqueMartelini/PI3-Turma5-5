@@ -1,4 +1,4 @@
-package com.puc.superid.ui.navigation
+package com.puc.superid.utils.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController

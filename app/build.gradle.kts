@@ -76,6 +76,7 @@ dependencies {
     implementation (libs.circleindicator)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.runtime.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -90,4 +91,5 @@ dependencies {
     implementation (libs.androidx.camera.view)
     implementation (libs.barcode.scanning)
     implementation (libs.firebase.firestore.ktx.v2400)
+    implementation (libs.material3)
 }

@@ -20,13 +20,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.puc.superid.ui.OnboardingActivity
+import com.puc.superid.ui.RegisterLoginActivity
 import com.puc.superid.ui.login.LoginScreen
 import com.puc.superid.ui.theme.SuperidTheme
+import com.puc.superid.utils.FirebaseUtils
 
 class MainActivity : ComponentActivity() {
 
@@ -46,7 +49,7 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(this, LoginScreen::class.java))
             finish()
         } else {
-            val isFirstTime = true
+            //val isFirstTime = true
             if (isFirstTime) {
                 sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
                 startActivity(Intent(this, OnboardingActivity::class.java))
@@ -62,26 +65,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
-    val db = Firebase.firestore
-    db.collection("loginPartner")
-        .get()
-        .addOnSuccessListener { documents ->
-            val docNames = documents.map { it.id }
-            onResult(docNames)
-        }
-        .addOnFailureListener {
-            onResult(emptyList())
-        }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val logins = remember { mutableStateListOf<String>() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        fetchLoginPartners { fetchedLogins ->
+        FirebaseUtils.fetchLoginPartners { fetchedLogins ->
             logins.clear()
             logins.addAll(fetchedLogins)
         }
@@ -114,15 +105,17 @@ fun MainScreen() {
                     },
                     navigationIcon = {
                         IconButton(onClick = { /* Drawer futuro */ }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
                         }
                     },
                     actions = {
                         IconButton(onClick = { /* Buscar */ }) {
-                            Icon(Icons.Default.Search, contentDescription = "Buscar")
+                            Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White)
                         }
-                        IconButton(onClick = { /* Adicionar */ }) {
-                            Icon(Icons.Default.Add, contentDescription = "Adicionar")
+                        IconButton(onClick = {
+                            context.startActivity(Intent(context, RegisterLoginActivity::class.java))
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = Color.White)
                         }
                     }
                 )

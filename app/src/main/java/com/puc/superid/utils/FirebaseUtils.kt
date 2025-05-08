@@ -33,7 +33,13 @@ object FirebaseUtils {
      * @throws FirebaseAuthException Lançado se ocorrer um erro ao criar o usuário no Firebase Authentication
      * @throws Exception Lançado se ocorrer qualquer outro erro ao salvar o usuário
      */
-    suspend fun registerUserInFirestore(name: String, email: String, password: String, imei: String, context: Context) {
+    suspend fun registerUserInFirestore(
+        name: String,
+        email: String,
+        password: String,
+        imei: String,
+        context: Context
+    ) {
         val auth = FirebaseAuth.getInstance()
         val firestore = FirebaseFirestore.getInstance()
 
@@ -72,16 +78,34 @@ object FirebaseUtils {
             throw e
         }
     }
+
     fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
         val db = Firebase.firestore
         db.collection("loginPartner")
             .get()
             .addOnSuccessListener { documents ->
-                val logins = documents.map { it.getString("login") ?: "" }
-                onResult(logins)
+                val docNames = documents.map { it.id }
+                onResult(docNames)
+            }
+            .addOnFailureListener {
+                onResult(emptyList())
+            }
+    }
+
+    fun fetchCategorias(onResult: (List<String>) -> Unit) {
+        val db = Firebase.firestore
+        db.collection("categorias")
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("FirebaseDebug", "Número de documentos encontrados: ${documents.size()}")
+                if (documents.isEmpty) {
+                    Log.d("FirebaseDebug", "Nenhum documento encontrado na coleção 'categorias'.")
+                }
+                val categorias = documents.map { it.id }
+                onResult(categorias)
             }
             .addOnFailureListener { exception ->
-                // Tratar erro
+                Log.e("FirebaseUtils", "Erro ao carregar categorias: ${exception.message}")
                 onResult(emptyList())
             }
     }

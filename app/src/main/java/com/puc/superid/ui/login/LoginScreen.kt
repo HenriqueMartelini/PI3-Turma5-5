@@ -22,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.puc.superid.MainActivity
-import com.puc.superid.ui.navigation.AppNavigation
+import com.puc.superid.utils.navigation.AppNavigation
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.viewmodel.LoginViewModel
 

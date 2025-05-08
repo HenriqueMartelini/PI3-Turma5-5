@@ -42,6 +42,8 @@
             android:exported="true"
             android:theme="@style/Theme.Superid" />
 
+        <activity android:name=".ui.RegisterLoginActivity" />
+
     </application>
 
 </manifest>
