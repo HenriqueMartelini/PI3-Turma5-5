@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.puc.superid.MainActivity
+import com.puc.superid.ui.navigation.AppNavigation
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.viewmodel.LoginViewModel
 
@@ -33,12 +34,7 @@ class LoginScreen : ComponentActivity() {
 
         setContent {
             SuperidTheme {
-                val navController = rememberNavController()
-                LoginScreen(navController = navController) {
-                    val intent = Intent(this@LoginScreen, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
+                AppNavigation()
             }
         }
     }
@@ -142,9 +138,7 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit) {
                     ) {
                         viewModel.login(
                             onSuccess = {
-                                val intent = Intent(context, MainActivity::class.java)
-                                context.startActivity(intent)
-                                if (context is ComponentActivity) context.finish()
+                                onLoginSuccess()
                             },
                             onFailure = { message ->
                                 viewModel.uiState = viewModel.uiState.copy(errorMessage = message)

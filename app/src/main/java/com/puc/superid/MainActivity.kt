@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(this, LoginScreen::class.java))
             finish()
         } else {
+            val isFirstTime = true
             if (isFirstTime) {
                 sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
                 startActivity(Intent(this, OnboardingActivity::class.java))
