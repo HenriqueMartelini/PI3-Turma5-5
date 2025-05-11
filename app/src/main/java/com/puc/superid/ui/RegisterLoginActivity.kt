@@ -1,10 +1,12 @@
 package com.puc.superid.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,9 +20,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,7 +37,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.firestore.FirebaseFirestore
+import com.puc.superid.R
+import com.puc.superid.ui.registration.NewCategoryActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
 
@@ -55,14 +61,22 @@ fun AppNavHost(navController: NavHostController) {
             RegisterLoginScreen(navController)
         }
         composable("home") {
-            Text("Home Screen", color = Color.White, modifier = Modifier
-                .fillMaxSize()
-                .background(Color.DarkGray))
+            Text(
+                "Home Screen",
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.DarkGray)
+            )
         }
         composable("nova_categoria") {
-            Text("Tela de Cadastro de Nova Categoria", color = Color.White, modifier = Modifier
-                .fillMaxSize()
-                .background(Color.DarkGray))
+            Text(
+                "Tela de Cadastro de Nova Categoria",
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.DarkGray)
+            )
         }
     }
 }
@@ -72,8 +86,9 @@ fun AppNavHost(navController: NavHostController) {
 fun RegisterLoginScreen(navController: NavController) {
     val context = LocalContext.current
     val categories = remember { mutableStateListOf<String>() }
-    var selectedCategory by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
+    val selectedCategory = remember { mutableStateOf("") }
+    val isDropDownExpanded = remember { mutableStateOf(false) }
+    val itemPosition = remember { mutableStateOf(0) }
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -83,12 +98,14 @@ fun RegisterLoginScreen(navController: NavController) {
         listOf(Color(0xFF3E8EFF), Color(0xFF6C63FF))
     )
 
+    // LaunchedEffect para carregar as categorias do Firebase
     LaunchedEffect(Unit) {
         FirebaseUtils.fetchCategorias { categorias ->
             Log.d("FirebaseDebug", "Categorias recebidas: $categorias")
+            categories.clear()
             categories.addAll(categorias)
             if (categories.isNotEmpty()) {
-                selectedCategory = categories.first()
+                selectedCategory.value = categories.first() // Define a categoria inicial
             }
         }
     }
@@ -183,44 +200,45 @@ fun RegisterLoginScreen(navController: NavController) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            ExposedDropdownMenuBox(
-                                expanded = expanded,
-                                onExpandedChange = { expanded = !expanded }
-                            ) {
-                                TextField(
-                                    value = selectedCategory,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Categoria") },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color.White, RoundedCornerShape(12.dp))
-                                        .shadow(2.dp, RoundedCornerShape(12.dp)),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedContainerColor = Color.White,
-                                        unfocusedContainerColor = Color.White,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent,
-                                        focusedTextColor = Color.Black,
-                                        unfocusedTextColor = Color.Black
-                                    )
-                                )
-
-                                ExposedDropdownMenu(
-                                    expanded = expanded,
-                                    onDismissRequest = { expanded = false }
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        isDropDownExpanded.value = true
+                                    }
                                 ) {
-                                    categories.forEach { selectionOption ->
+                                    Text(
+                                        text = if (selectedCategory.value.isNotEmpty()) selectedCategory.value else "Escolha uma categoria",
+                                        color = Color.Black,
+                                        fontSize = 16.sp,
+                                    )
+                                    // Ajuste do ícone
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.images),
+                                        contentDescription = "DropDown Icon",
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .padding(start = 8.dp)
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = isDropDownExpanded.value,
+                                    onDismissRequest = {
+                                        isDropDownExpanded.value = false
+                                    }) {
+                                    categories.forEachIndexed { index, category ->
                                         DropdownMenuItem(
-                                            text = { Text(selectionOption) },
+                                            text = {
+                                                Text(text = category)
+                                            },
                                             onClick = {
-                                                selectedCategory = selectionOption
-                                                expanded = false
+                                                selectedCategory.value = category
+                                                isDropDownExpanded.value = false
                                             }
                                         )
                                     }
@@ -228,12 +246,13 @@ fun RegisterLoginScreen(navController: NavController) {
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
-
                             Text(
                                 text = "Adicionar nova categoria",
                                 color = Color(0xFF3E8EFF),
                                 modifier = Modifier
-                                    .clickable { navController.navigate("nova_categoria") }
+                                    .clickable {
+                                        context.startActivity(Intent(context, NewCategoryActivity::class.java))
+                                    }
                                     .padding(start = 4.dp)
                             )
                         }

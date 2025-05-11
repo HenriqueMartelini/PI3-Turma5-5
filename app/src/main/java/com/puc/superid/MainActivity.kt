@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -28,8 +29,10 @@ import com.google.firebase.ktx.Firebase
 import com.puc.superid.ui.OnboardingActivity
 import com.puc.superid.ui.RegisterLoginActivity
 import com.puc.superid.ui.login.LoginScreen
+import com.puc.superid.ui.login.QRCodeScannerActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
+import com.puc.superid.ui.login.QRCodeScannerScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -44,7 +47,6 @@ class MainActivity : ComponentActivity() {
 
         val currentUser = auth.currentUser
         val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
-
         if (currentUser == null) {
             startActivity(Intent(this, LoginScreen::class.java))
             finish()
@@ -111,6 +113,16 @@ fun MainScreen() {
                     actions = {
                         IconButton(onClick = { /* Buscar */ }) {
                             Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White)
+                        }
+                        IconButton(onClick = {
+                            context.startActivity(Intent(context, QRCodeScannerActivity::class.java))
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.qrcode_icon),
+                                contentDescription = "Escanear QR Code",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         IconButton(onClick = {
                             context.startActivity(Intent(context, RegisterLoginActivity::class.java))

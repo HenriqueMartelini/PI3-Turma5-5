@@ -109,4 +109,20 @@ object FirebaseUtils {
                 onResult(emptyList())
             }
     }
+
+    fun createCategoria(
+        categoria: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val db = Firebase.firestore
+        val data = mapOf("categoria" to categoria)
+
+        db.collection("categorias")
+            .document(categoria)
+            .set(data)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { exception -> onError(exception) }
+    }
+
 }

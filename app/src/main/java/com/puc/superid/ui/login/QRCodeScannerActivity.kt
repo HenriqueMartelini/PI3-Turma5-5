@@ -2,8 +2,11 @@ package com.puc.superid.ui.login
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -13,6 +16,8 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,8 +28,30 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.puc.superid.data.datasource.confirmarLoginViaQRCode
+import com.puc.superid.ui.theme.SuperidTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+
+
+class QRCodeScannerActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            SuperidTheme {
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    QRCodeScannerScreen(
+                        onCodeScanned = {
+                            finish()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
@@ -107,6 +134,6 @@ private fun processQRCodeFromImageProxy(
             Log.e("QRCode", "Erro ao ler código: ${it.message}")
         }
         .addOnCompleteListener {
-            imageProxy.close()  // Fecha o proxy da imagem após o processamento
+            imageProxy.close()
         }
 }

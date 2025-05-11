@@ -92,4 +92,9 @@ dependencies {
     implementation (libs.barcode.scanning)
     implementation (libs.firebase.firestore.ktx.v2400)
     implementation (libs.material3)
+    implementation (libs.androidx.camera.camera2.v130)
+    implementation (libs.androidx.camera.lifecycle.v130)
+    implementation (libs.androidx.camera.view.v130)
+    implementation (libs.barcode.scanning.v1720)
+
 }
