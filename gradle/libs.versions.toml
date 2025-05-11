@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.2"
+agp = "8.9.0"
 compiler = "1.5.15"
 firebaseBom = "33.10.0"
 gradle = "8.0.2"
@@ -15,6 +15,7 @@ activityCompose = "1.10.1"
 composeBom = "2025.02.00"
 firebaseAuthKtx = "23.2.0"
 firebaseFirestoreKtx = "25.1.2"
+navigation-compose = "2.7.7"
 
 [libraries]
 androidx-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compiler" }
@@ -39,6 +40,9 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
+
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
