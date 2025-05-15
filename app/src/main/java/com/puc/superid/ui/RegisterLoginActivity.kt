@@ -88,7 +88,7 @@ fun RegisterLoginScreen(navController: NavController) {
     val categories = remember { mutableStateListOf<String>() }
     val selectedCategory = remember { mutableStateOf("") }
     val isDropDownExpanded = remember { mutableStateOf(false) }
-    val itemPosition = remember { mutableStateOf(0) }
+    val itemPosition = remember { mutableIntStateOf(0) }
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -217,7 +217,6 @@ fun RegisterLoginScreen(navController: NavController) {
                                         color = Color.Black,
                                         fontSize = 16.sp,
                                     )
-                                    // Ajuste do ícone
                                     Icon(
                                         painter = painterResource(id = R.drawable.images),
                                         contentDescription = "DropDown Icon",
@@ -262,8 +261,18 @@ fun RegisterLoginScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (username.isNotBlank() && password.isNotBlank() && site.isNotBlank()) {
-                                    Toast.makeText(context, "Login adicionado!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
+                                    FirebaseUtils.saveLoginOnFirestore(
+                                        site = site,
+                                        email = username,
+                                        senha = password,
+                                        categoria = selectedCategory.value,
+                                        context = context
+                                    ) { sucesso ->
+                                        if (sucesso) {
+                                            Toast.makeText(context, "Login salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                                            navController.popBackStack()
+                                        }
+                                    }
                                 } else {
                                     Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
                                 }
