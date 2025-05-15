@@ -243,8 +243,18 @@ fun RegisterLoginScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (username.isNotBlank() && password.isNotBlank() && site.isNotBlank()) {
-                                    Toast.makeText(context, "Login adicionado!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
+                                    FirebaseUtils.saveLoginOnFirestore(
+                                        site = site,
+                                        email = username,
+                                        senha = password,
+                                        categoria = selectedCategory,
+                                        context = context
+                                    ) { sucesso ->
+                                        if (sucesso) {
+                                            Toast.makeText(context, "Login salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                                            navController.popBackStack()
+                                        }
+                                    }
                                 } else {
                                     Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
                                 }

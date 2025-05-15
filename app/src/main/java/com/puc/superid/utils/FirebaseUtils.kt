@@ -2,6 +2,7 @@ package com.puc.superid.utils
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
@@ -78,6 +79,29 @@ object FirebaseUtils {
             throw e
         }
     }
+
+    fun saveLoginOnFirestore(site: String, email: String, senha: String, categoria: String, context: Context, onComplete: (Boolean) -> Unit) {
+        val db = Firebase.firestore
+        val loginData = hashMapOf(
+            "email" to email,
+            "senha" to senha,
+            "categoria" to categoria
+        )
+
+        db.collection("loginPartner")
+            .document(site)
+            .set(loginData)
+            .addOnSuccessListener {
+                Log.d("FirebaseUtils", "Login salvo com sucesso.")
+                onComplete(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseUtils", "Erro ao salvar login: ${e.message}")
+                Toast.makeText(context, "Erro ao salvar login", Toast.LENGTH_SHORT).show()
+                onComplete(false)
+            }
+    }
+
 
     fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
         val db = Firebase.firestore
