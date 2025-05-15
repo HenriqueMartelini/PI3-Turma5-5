@@ -14,5 +14,6 @@ data class User(
     val name: String,
     val email: String,
     val imei: String,
-    val password: String? = null
+    val password: String,
+    val lastLogin: Long? = null
 )

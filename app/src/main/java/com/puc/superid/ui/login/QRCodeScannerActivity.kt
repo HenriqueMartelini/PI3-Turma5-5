@@ -1,7 +1,7 @@
+// QRCodeScannerActivity.kt
 package com.puc.superid.ui.login
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -17,30 +17,27 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import com.puc.superid.data.datasource.confirmarLoginViaQRCode
+import com.puc.superid.data.datasource.LoginDataSource
 import com.puc.superid.ui.theme.SuperidTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 class QRCodeScannerActivity : ComponentActivity() {
-
-    private lateinit var context: Context
-
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                startCamera()
-            } else {
+            if (!granted) {
                 Toast.makeText(this, "Permissão de câmera negada", Toast.LENGTH_LONG).show()
                 finish()
             }
@@ -48,93 +45,67 @@ class QRCodeScannerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        context = this
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
 
         setContent {
             SuperidTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     QRCodeScannerScreen(onCodeScanned = { finish() })
                 }
             }
         }
     }
-
-    private fun startCamera() {
-    }
-
-    override fun onStart() {
-        super.onStart()
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
 }
 
-@SuppressLint("UnsafeOptInUsageError")
 @Composable
 fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val isCodeProcessed = remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(factory = { ctx ->
-            val previewView = PreviewView(ctx).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
-
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-
-                val preview = Preview.Builder().build().apply {
-                    setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER)
-                    .build().apply {
-                        setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
-                            processQRCodeFromImageProxy(imageProxy, ctx) { code ->
-                                if (!isCodeProcessed.value) {
-                                    isCodeProcessed.value = true
-                                    Log.d("QRCode", "Código escaneado: $code")
-                                    coroutineScope.launch(Dispatchers.IO) {
-                                        confirmarLoginViaQRCode(code, context)
-                                    }
-                                    onCodeScanned()
-                                }
-                            }
+        CameraPreview(
+            onQrCodeScanned = { token ->
+                if (!isProcessing) {
+                    isProcessing = true
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val success = LoginDataSource.authenticateQrCodeLogin(token, context)
+                        if (success) {
+                            Log.d("QRLogin", "Login via QR Code concluído com sucesso.")
+                            message = "Login autenticado com sucesso!"
+                            onCodeScanned()
+                        } else {
+                            Log.e("QRLogin", "Falha no login via QR Code.")
+                            message = "Falha na autenticação do QR Code."
+                            isProcessing = false
                         }
                     }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        ctx as androidx.lifecycle.LifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalyzer
-                    )
-                } catch (e: Exception) {
-                    Log.e("CameraX", "Erro ao iniciar câmera: ${e.message}")
                 }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
-            }, ContextCompat.getMainExecutor(ctx))
+        message?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .align(Alignment.BottomCenter)
+            ) {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
 
-            previewView
-        }, modifier = Modifier.fillMaxSize())
-
-        if (!isCodeProcessed.value) {
+        if (!isProcessing) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -142,7 +113,7 @@ fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Text(
-                    text = "Aponte para o QR Code...",
+                    text = "Aponte para o QR Code de login",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -151,13 +122,72 @@ fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
     }
 }
 
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
-private fun processQRCodeFromImageProxy(
-    imageProxy: ImageProxy,
-    context: Context,
-    onCodeFound: (String) -> Unit
+@Composable
+fun CameraPreview(
+    onQrCodeScanned: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val mediaImage = imageProxy.image ?: run {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+            }
+
+            val executor = ContextCompat.getMainExecutor(ctx)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(
+                            Executors.newSingleThreadExecutor()
+                        ) { imageProxy ->
+                            processImage(imageProxy, onQrCodeScanned)
+                        }
+                    }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalyzer
+                    )
+                } catch (exc: Exception) {
+                    Log.e("CameraPreview", "Use case binding failed", exc)
+                }
+            }, executor)
+
+            previewView
+        },
+        modifier = modifier
+    )
+}
+
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
+private fun processImage(
+    imageProxy: ImageProxy,
+    onQrCodeScanned: (String) -> Unit
+) {
+    val mediaImage = imageProxy.image
+    if (mediaImage == null) {
         imageProxy.close()
         return
     }
@@ -173,13 +203,13 @@ private fun processQRCodeFromImageProxy(
     scanner.process(image)
         .addOnSuccessListener { barcodes ->
             for (barcode in barcodes) {
-                barcode.rawValue?.let {
-                    onCodeFound(it)
+                barcode.rawValue?.let { qrCode ->
+                    onQrCodeScanned(qrCode)
                 }
             }
         }
-        .addOnFailureListener {
-            Log.e("QRCode", "Erro ao ler código: ${it.message}")
+        .addOnFailureListener { e ->
+            Log.e("QRCodeScanner", "Erro ao escanear QR code", e)
         }
         .addOnCompleteListener {
             imageProxy.close()
