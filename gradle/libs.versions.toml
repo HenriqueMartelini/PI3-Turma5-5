@@ -38,6 +38,7 @@ zxingAndroidEmbedded = "4.3.0"
 navigationRuntimeKtx = "2.8.9"
 navigationCompose = "2.8.9"
 navigationRuntimeAndroid = "2.9.0"
+securityCryptoKtx = "1.0.0"
 
 [libraries]
 androidx-activity-compose-v160 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -88,6 +89,7 @@ zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", ve
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
+androidx-security-crypto-ktx = { group = "androidx.security", name = "security-crypto-ktx", version.ref = "securityCryptoKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
