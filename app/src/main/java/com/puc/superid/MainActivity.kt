@@ -73,11 +73,12 @@ fun MainScreen() {
     val logins = remember { mutableStateListOf<String>() }
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        FirebaseUtils.fetchLoginPartners { fetchedLogins ->
+    DisposableEffect(Unit) {
+        FirebaseUtils.listenToLoginPartnersGlobal { fetchedLogins ->
             logins.clear()
             logins.addAll(fetchedLogins)
         }
+        onDispose { }
     }
 
     Box(

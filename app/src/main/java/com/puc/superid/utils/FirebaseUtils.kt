@@ -116,6 +116,18 @@ object FirebaseUtils {
             }
     }
 
+    fun listenToLoginPartnersGlobal(onUpdate: (List<String>) -> Unit) {
+        Firebase.firestore
+            .collection("loginPartner")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+
+                val logins = snapshot.documents.map { it.id }
+                onUpdate(logins)
+            }
+    }
+
+
     fun fetchCategorias(onResult: (List<String>) -> Unit) {
         val db = Firebase.firestore
         db.collection("categorias")
