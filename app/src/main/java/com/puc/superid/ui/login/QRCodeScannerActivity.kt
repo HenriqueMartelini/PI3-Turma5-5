@@ -3,6 +3,7 @@ package com.puc.superid.ui.login
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -29,6 +30,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.puc.superid.data.datasource.LoginDataSource
+import com.puc.superid.ui.LoginSuccessActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,7 +56,12 @@ class QRCodeScannerActivity : ComponentActivity() {
         setContent {
             SuperidTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    QRCodeScannerScreen(onCodeScanned = { finish() })
+                    QRCodeScannerScreen(
+                        onCodeScanned = {
+                            startActivity(Intent(this, LoginSuccessActivity::class.java))
+                            finish()
+                        }
+                    )
                 }
             }
         }
@@ -146,7 +153,7 @@ fun CameraPreview(
                 val cameraProvider = cameraProviderFuture.get()
 
                 val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
+                    it.surfaceProvider = previewView.surfaceProvider
                 }
 
                 val imageAnalyzer = ImageAnalysis.Builder()
