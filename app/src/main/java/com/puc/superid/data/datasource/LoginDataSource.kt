@@ -23,7 +23,7 @@ object LoginDataSource {
 
             val loginPartnerDoc = db.collection(LOGIN_PARTNER)
                 .whereEqualTo("email", email)
-                .whereEqualTo("password", password)
+                .whereEqualTo("senha", password)
                 .get()
                 .await()
 
