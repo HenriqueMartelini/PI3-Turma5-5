@@ -32,9 +32,6 @@ object LoginDataSource {
                 return false
             }
 
-            // Autentica com Firebase Auth usando email e senha do QR Code
-            auth.signInWithEmailAndPassword(email, password).await()
-
             // Atualiza documento loginRequests para status autenticado
             val updateData = mapOf(
                 "status" to "authenticated",
