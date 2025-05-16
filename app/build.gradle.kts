@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.puc.superid"
-        minSdk = 32
+        minSdk = 29
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
