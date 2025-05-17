@@ -3,9 +3,11 @@ package com.puc.superid
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,6 +35,7 @@ import com.puc.superid.ui.login.QRCodeScannerActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
 import com.puc.superid.ui.login.QRCodeScannerScreen
+import com.puc.superid.ui.passwordmanagement.EditPasswordActivity
 
 class MainActivity : ComponentActivity() {
 
@@ -72,6 +75,8 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val logins = remember { mutableStateListOf<FirebaseUtils.LoginItem>() }
     val context = LocalContext.current
+    var selectedItem by remember { mutableStateOf<FirebaseUtils.LoginItem?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         FirebaseUtils.listenToLoginPartnersGlobal { fetchedLogins ->
@@ -141,7 +146,13 @@ fun MainScreen() {
                         .padding(top = 8.dp)
                 ) {
                     items(logins) { item ->
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedItem = item
+                                showDialog = true
+                            }
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -175,6 +186,44 @@ fun MainScreen() {
                             )
                         }
                     }
+                }
+                if (showDialog && selectedItem != null) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = {
+                            Text(text = selectedItem?.login ?: "", style = MaterialTheme.typography.titleMedium)
+                        },
+                        text = {
+                            Text("O que deseja fazer com essa senha?")
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showDialog = false
+                                val intent = Intent(context, EditPasswordActivity::class.java)
+                                intent.putExtra(EditPasswordActivity.EXTRA_DOCUMENT_ID, selectedItem?.id ?: "")
+                                context.startActivity(intent)
+                            }) {
+                                Text("Editar senha")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                selectedItem?.let {
+                                    Firebase.firestore.collection("loginPartners").document(it.id)
+                                        .delete()
+                                        .addOnSuccessListener {
+                                            Toast.makeText(context, "Senha excluída", Toast.LENGTH_SHORT).show()
+                                            showDialog = false
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(context, "Erro ao excluir: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        }
+                                }
+                            }) {
+                                Text("Excluir senha", color = Color.Red)
+                            }
+                        }
+                    )
                 }
             }
         )

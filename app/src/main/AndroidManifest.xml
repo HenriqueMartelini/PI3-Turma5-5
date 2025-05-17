@@ -51,6 +51,7 @@
         <activity android:name=".ui.registration.NewCategoryActivity" />
         <activity android:name=".ui.login.QRCodeScannerActivity" />
         <activity android:name=".ui.LoginSuccessActivity" />
+        <activity android:name=".ui.passwordmanagement.EditPasswordActivity" />
 
     </application>
 

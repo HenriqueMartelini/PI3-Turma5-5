@@ -102,20 +102,6 @@ object FirebaseUtils {
             }
     }
 
-
-    fun fetchLoginPartners(onResult: (List<String>) -> Unit) {
-        val db = Firebase.firestore
-        db.collection("loginPartner")
-            .get()
-            .addOnSuccessListener { documents ->
-                val docNames = documents.map { it.id }
-                onResult(docNames)
-            }
-            .addOnFailureListener {
-                onResult(emptyList())
-            }
-    }
-
     fun listenToLoginPartnersGlobal(callback: (List<LoginItem>) -> Unit) {
         val db = Firebase.firestore
         db.collection("loginPartner")
@@ -126,9 +112,9 @@ object FirebaseUtils {
                 }
 
                 val items = snapshot.documents.mapNotNull { doc ->
-                    val login = doc.getString("email") ?: return@mapNotNull null
+                    val login = doc.id
                     val categoria = doc.getString("categoria") ?: "Sem categoria"
-                    LoginItem(login, categoria)
+                    LoginItem(login, categoria, id = doc.id)
                 }
 
                 callback(items)
@@ -170,6 +156,7 @@ object FirebaseUtils {
     }
     data class LoginItem(
         val login: String = "",
-        val categoria: String = ""
+        val categoria: String = "",
+        val id: String
     )
 }
