@@ -50,6 +50,35 @@ class LoginViewModel : ViewModel() {
                 }
             }
     }
+
+    fun resendVerificationToEmail(email: String, password: String, onResult: (String) -> Unit) {
+        if (email.isBlank() || password.isBlank()) {
+            onResult("Preencha o e-mail e a senha.")
+            return
+        }
+
+        val auth = FirebaseAuth.getInstance()
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    if (user != null && !user.isEmailVerified) {
+                        user.sendEmailVerification()
+                            .addOnCompleteListener { sendTask ->
+                                if (sendTask.isSuccessful) {
+                                    onResult("Email de verificação reenviado.")
+                                } else {
+                                    onResult("Erro ao enviar: ${sendTask.exception?.message}")
+                                }
+                            }
+                    } else {
+                        onResult("Email já verificado ou usuário inválido.")
+                    }
+                } else {
+                    onResult("Erro ao autenticar: ${task.exception?.message}")
+                }
+            }
+    }
 }
 
 data class LoginUiState(

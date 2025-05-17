@@ -69,6 +69,23 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                "Reenviar e-mail de verificação",
+                color = Color(0xFFB2EBF2),
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .clickable {
+                        viewModel.resendVerificationToEmail(
+                            uiState.email,
+                            uiState.password
+                        ) { message ->
+                            viewModel.uiState = viewModel.uiState.copy(errorMessage = message)
+                        }
+                    }
+                    .padding(8.dp)
+            )
 
             Spacer(modifier = Modifier.height(40.dp))
 

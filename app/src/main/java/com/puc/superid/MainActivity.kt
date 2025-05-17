@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 setContent {
                     SuperidTheme {
-                        MainScreen()
+                        LoginScreen()
                     }
                 }
             }
