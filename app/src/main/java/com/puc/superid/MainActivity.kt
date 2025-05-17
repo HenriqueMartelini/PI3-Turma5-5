@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 setContent {
                     SuperidTheme {
-                        LoginScreen()
+                        MainScreen()
                     }
                 }
             }
@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val logins = remember { mutableStateListOf<String>() }
+    val logins = remember { mutableStateListOf<FirebaseUtils.LoginItem>() }
     val context = LocalContext.current
 
     DisposableEffect(Unit) {
@@ -141,24 +141,37 @@ fun MainScreen() {
                         .padding(top = 8.dp)
                 ) {
                     items(logins) { item ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFD3D3D3))
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(40.dp),
-                                tint = Color.DarkGray
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                text = item,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFD3D3D3))
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = Color.DarkGray
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        text = item.login,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.Black
+                                    )
+                                    Text(
+                                        text = "Categoria: ${item.categoria}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                color = Color.LightGray
                             )
                         }
                     }
