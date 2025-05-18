@@ -1,4 +1,3 @@
-// QRCodeScannerActivity.kt
 package com.puc.superid.ui.login
 
 import android.Manifest

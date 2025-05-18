@@ -36,6 +36,7 @@ import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
 import com.puc.superid.ui.login.QRCodeScannerScreen
 import com.puc.superid.ui.passwordmanagement.EditPasswordActivity
+import com.puc.superid.viewmodel.EditPasswordViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -77,6 +78,7 @@ fun MainScreen() {
     val context = LocalContext.current
     var selectedItem by remember { mutableStateOf<FirebaseUtils.LoginItem?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    val viewModel = remember { EditPasswordViewModel() }
 
     DisposableEffect(Unit) {
         FirebaseUtils.listenToLoginPartnersGlobal { fetchedLogins ->
@@ -208,16 +210,17 @@ fun MainScreen() {
                         },
                         dismissButton = {
                             TextButton(onClick = {
-                                selectedItem?.let {
-                                    Firebase.firestore.collection("loginPartners").document(it.id)
-                                        .delete()
-                                        .addOnSuccessListener {
-                                            Toast.makeText(context, "Senha excluída", Toast.LENGTH_SHORT).show()
+                                selectedItem?.let { item ->
+                                    viewModel.deletePassword(
+                                        documentId = item.id,
+                                        onSuccess = {
+                                            Toast.makeText(context, "Senha excluída com sucesso.", Toast.LENGTH_SHORT).show()
                                             showDialog = false
+                                        },
+                                        onError = { error ->
+                                            Toast.makeText(context, "Erro ao excluir: $error", Toast.LENGTH_LONG).show()
                                         }
-                                        .addOnFailureListener { e ->
-                                            Toast.makeText(context, "Erro ao excluir: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                                        }
+                                    )
                                 }
                             }) {
                                 Text("Excluir senha", color = Color.Red)
