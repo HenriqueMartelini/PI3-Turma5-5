@@ -1,4 +1,3 @@
-// QRCodeScannerActivity.kt
 package com.puc.superid.ui.login
 
 import android.Manifest
@@ -33,6 +32,7 @@ import com.puc.superid.data.datasource.LoginDataSource
 import com.puc.superid.ui.LoginSuccessActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
@@ -72,24 +72,24 @@ class QRCodeScannerActivity : ComponentActivity() {
 fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var isProcessing by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var processingState by remember { mutableStateOf<ProcessingState>(ProcessingState.Idle) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
-            onQrCodeScanned = { token ->
-                if (!isProcessing) {
-                    isProcessing = true
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val success = LoginDataSource.authenticateQrCodeLogin(token, context)
-                        if (success) {
-                            Log.d("QRLogin", "Login via QR Code concluído com sucesso.")
-                            message = "Login autenticado com sucesso!"
+            onQrCodeScanned = { qrData ->
+                if (processingState !is ProcessingState.Processing) {
+                    processingState = ProcessingState.Processing
+                    coroutineScope.launch {
+                        val success = LoginDataSource.authenticateQrCodeLogin(qrData, context)
+                        processingState = if (success) {
                             onCodeScanned()
+                            ProcessingState.Success
                         } else {
-                            Log.e("QRLogin", "Falha no login via QR Code.")
-                            message = "Falha na autenticação do QR Code."
-                            isProcessing = false
+                            ProcessingState.Error("Falha na autenticação com o parceiro")
+                        }
+                        if (!success) {
+                            delay(2000)
+                            processingState = ProcessingState.Idle
                         }
                     }
                 }
@@ -97,36 +97,50 @@ fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
 
-        message?.let {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .align(Alignment.BottomCenter)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-
-        if (!isProcessing) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                Text(
-                    text = "Aponte para o QR Code de login",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                when (processingState) {
+                    is ProcessingState.Processing -> {
+                        CircularProgressIndicator()
+                        Text(
+                            text = "Conectando com parceiro...",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    is ProcessingState.Error -> {
+                        Text(
+                            text = (processingState as ProcessingState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    else -> {
+                        Text(
+                            text = "Aponte para o QR Code do parceiro",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+sealed class ProcessingState {
+    object Idle : ProcessingState()
+    object Processing : ProcessingState()
+    object Success : ProcessingState()
+    class Error(val message: String) : ProcessingState()
 }
 
 @Composable
@@ -137,6 +151,7 @@ fun CameraPreview(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var lastProcessedCode by remember { mutableStateOf<String?>(null) }
 
     AndroidView(
         factory = { ctx ->
@@ -160,20 +175,25 @@ fun CameraPreview(
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also {
-                        it.setAnalyzer(
-                            Executors.newSingleThreadExecutor()
-                        ) { imageProxy ->
-                            processImage(imageProxy, onQrCodeScanned)
+                        it.setAnalyzer(executor) { imageProxy ->
+                            processImage(
+                                imageProxy = imageProxy,
+                                onQrCodeScanned = { qrCode ->
+                                    // Só processa se for um código novo
+                                    if (qrCode != lastProcessedCode) {
+                                        lastProcessedCode = qrCode
+                                        onQrCodeScanned(qrCode)
+                                    }
+                                }
+                            )
                         }
                     }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 try {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
-                        cameraSelector,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
                         imageAnalyzer
                     )
@@ -193,30 +213,23 @@ private fun processImage(
     imageProxy: ImageProxy,
     onQrCodeScanned: (String) -> Unit
 ) {
-    val mediaImage = imageProxy.image
-    if (mediaImage == null) {
+    val mediaImage = imageProxy.image ?: run {
         imageProxy.close()
         return
     }
 
     val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-
-    val options = BarcodeScannerOptions.Builder()
-        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-        .build()
-
-    val scanner = BarcodeScanning.getClient(options)
+    val scanner = BarcodeScanning.getClient(
+        BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .build()
+    )
 
     scanner.process(image)
         .addOnSuccessListener { barcodes ->
-            for (barcode in barcodes) {
-                barcode.rawValue?.let { qrCode ->
-                    onQrCodeScanned(qrCode)
-                }
+            barcodes.firstOrNull()?.rawValue?.let { qrCode ->
+                onQrCodeScanned(qrCode)
             }
-        }
-        .addOnFailureListener { e ->
-            Log.e("QRCodeScanner", "Erro ao escanear QR code", e)
         }
         .addOnCompleteListener {
             imageProxy.close()

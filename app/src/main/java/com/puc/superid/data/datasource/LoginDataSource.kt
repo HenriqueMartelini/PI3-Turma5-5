@@ -4,65 +4,58 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 object LoginDataSource {
     private const val LOGIN_REQUESTS = "loginRequests"
-    private const val LOGIN_PARTNER = "loginPartner"
     private val db by lazy { FirebaseFirestore.getInstance() }
-    private val auth by lazy { FirebaseAuth.getInstance() }
 
     suspend fun authenticateQrCodeLogin(encodedLoginData: String, context: Context): Boolean {
         return try {
             val loginDataJson = String(android.util.Base64.decode(encodedLoginData, android.util.Base64.DEFAULT))
-            val loginParts = org.json.JSONObject(loginDataJson)
-            val email = loginParts.getString("email")
-            val password = loginParts.getString("password")
+            val loginData = org.json.JSONObject(loginDataJson)
 
-            val loginPartnerDoc = db.collection(LOGIN_PARTNER)
-                .whereEqualTo("email", email)
-                .whereEqualTo("password", password)
-                .get()
-                .await()
+            val token = loginData.getString("token")
+            val partnerEmail = loginData.getString("partnerEmail")
 
-            if (loginPartnerDoc.isEmpty) {
-                Log.e("QRLogin", "Login não encontrado na coleção loginPartner.")
+            val loginRequestDoc = db.collection(LOGIN_REQUESTS).document(token).get().await()
+
+            if (!loginRequestDoc.exists()) {
+                Log.e("QRLogin", "Token de login não encontrado")
                 return false
             }
 
-            // Atualiza documento loginRequests para status autenticado
+            val expiresAt = loginRequestDoc.getDate("expiresAt")
+            if (expiresAt != null && expiresAt.before(Date())) {
+                Log.e("QRLogin", "Token de login expirado")
+                return false
+            }
+
+            if (loginRequestDoc.getString("status") == "authenticated") {
+                Log.d("QRLogin", "Login já foi autenticado anteriormente")
+                return true
+            }
+
             val updateData = mapOf(
                 "status" to "authenticated",
-                "email" to email,
-                "password" to password,
-                "authenticatedAt" to System.currentTimeMillis(),
-                "deviceId" to getDeviceId(context)
+                "authenticatedAt" to FieldValue.serverTimestamp(),
+                "deviceId" to getDeviceId(context),
+                "userEmail" to partnerEmail
             )
 
-            val pendingDocs = db.collection(LOGIN_REQUESTS)
-                .whereEqualTo("email", email)
-                .whereEqualTo("status", "pending")
-                .get()
-                .await()
-
-            if (pendingDocs.isEmpty) {
-                Log.e("QRLogin", "Documento loginRequest pendente não encontrado para o email.")
-                return false
-            }
-
-            val docId = pendingDocs.documents.first().id
-
             db.collection(LOGIN_REQUESTS)
-                .document(docId)
-                .set(updateData, SetOptions.merge())
+                .document(token)
+                .update(updateData)
                 .await()
 
-            Log.d("QRLogin", "QR Code autenticado com sucesso para email: $email")
+            Log.d("QRLogin", "Autenticação com parceiro realizada com sucesso")
             true
         } catch (e: Exception) {
-            Log.e("QRLogin", "Erro ao autenticar via QR Code", e)
+            Log.e("QRLogin", "Erro geral no processo", e)
             false
         }
     }
