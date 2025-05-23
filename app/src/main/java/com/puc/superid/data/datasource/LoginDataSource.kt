@@ -6,61 +6,60 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 object LoginDataSource {
     private const val LOGIN_REQUESTS = "loginRequests"
     private val db by lazy { FirebaseFirestore.getInstance() }
+    private val auth by lazy { FirebaseAuth.getInstance() }
 
     suspend fun authenticateQrCodeLogin(encodedLoginData: String, context: Context): Boolean {
         return try {
-            // 1. Decodificar os dados do QR Code
             val loginDataJson = String(android.util.Base64.decode(encodedLoginData, android.util.Base64.DEFAULT))
             val loginData = org.json.JSONObject(loginDataJson)
 
-            // 2. Extrair os dados necessários
             val token = loginData.getString("token")
-            val partnerEmail = loginData.getString("partnerEmail")
 
-            // 3. Verificar se o token existe e não está expirado
-            val loginRequestDoc = db.collection(LOGIN_REQUESTS).document(token).get().await()
+            val loginRequestRef = db.collection(LOGIN_REQUESTS).document(token)
+            val loginRequestDoc = loginRequestRef.get().await()
 
             if (!loginRequestDoc.exists()) {
-                Log.e("QRLogin", "Token de login não encontrado")
+                Log.e("QRLogin", "Login token não encontrado")
                 return false
             }
 
             val expiresAt = loginRequestDoc.getDate("expiresAt")
             if (expiresAt != null && expiresAt.before(Date())) {
-                Log.e("QRLogin", "Token de login expirado")
+                Log.e("QRLogin", "Login token expirado")
                 return false
             }
 
-            // 4. Verificar se já está autenticado (evitar múltiplas tentativas)
             if (loginRequestDoc.getString("status") == "authenticated") {
-                Log.d("QRLogin", "Login já foi autenticado anteriormente")
+                Log.d("QRLogin", "Login já autenticado")
                 return true
             }
 
-            // 5. Atualizar o documento no Firestore marcando como autenticado
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                Log.e("QRLogin", "Usuário autenticado não encontrado")
+                return false
+            }
+
             val updateData = mapOf(
                 "status" to "authenticated",
                 "authenticatedAt" to FieldValue.serverTimestamp(),
                 "deviceId" to getDeviceId(context),
-                "userEmail" to partnerEmail // Armazenamos o email do parceiro para referência
+                "user" to currentUser.uid,
+                "userEmail" to currentUser.email
             )
 
-            db.collection(LOGIN_REQUESTS)
-                .document(token)
-                .update(updateData)
-                .await()
+            loginRequestRef.update(updateData).await()
 
-            Log.d("QRLogin", "Autenticação com parceiro realizada com sucesso")
+            Log.d("QRLogin", "QR code login autenticado com sucesso")
             true
         } catch (e: Exception) {
-            Log.e("QRLogin", "Erro geral no processo", e)
+            Log.e("QRLogin", "Erro em autenticar o QRCode", e)
             false
         }
     }
