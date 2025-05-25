@@ -1,4 +1,4 @@
-package com.puc.superid.ui
+package com.puc.superid.ui.login
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
