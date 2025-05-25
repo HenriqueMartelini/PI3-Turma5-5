@@ -54,4 +54,9 @@ object StringUtils {
     private fun generateSalt(): String {
         return UUID.randomUUID().toString()
     }
+
+    fun isValidDomain(domain: String): Boolean {
+        val regex = Regex("^www\\.[a-zA-Z0-9.-]+\\.[a-z]{2,}$")
+        return regex.matches(domain) && !domain.contains("/")
+    }
 }

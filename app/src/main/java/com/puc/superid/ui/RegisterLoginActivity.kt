@@ -41,6 +41,7 @@ import com.puc.superid.R
 import com.puc.superid.ui.registration.NewCategoryActivity
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
+import com.puc.superid.utils.StringUtils
 
 class RegisterLoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,10 +130,18 @@ fun RegisterLoginScreen(navController: NavController) {
                 },
                 actions = {
                     IconButton(onClick = { }) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White)
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Buscar",
+                            tint = Color.White
+                        )
                     }
                     IconButton(onClick = { }) {
-                        Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = Color.White)
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Adicionar",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color(0xFF0D0B2D))
@@ -250,7 +259,12 @@ fun RegisterLoginScreen(navController: NavController) {
                                 color = Color(0xFF3E8EFF),
                                 modifier = Modifier
                                     .clickable {
-                                        context.startActivity(Intent(context, NewCategoryActivity::class.java))
+                                        context.startActivity(
+                                            Intent(
+                                                context,
+                                                NewCategoryActivity::class.java
+                                            )
+                                        )
                                     }
                                     .padding(start = 4.dp)
                             )
@@ -261,20 +275,48 @@ fun RegisterLoginScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (username.isNotBlank() && password.isNotBlank() && site.isNotBlank()) {
+                                    if (!StringUtils.isValidEmail(username)) {
+                                        Toast.makeText(
+                                            context,
+                                            "Email inválido",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        return@Button
+                                    }
+
+                                    if (!StringUtils.isValidDomain(site)) {
+                                        Toast.makeText(
+                                            context,
+                                            "O domínio do site é inválido. Deve começar com www. e não conter subdomínios ou caminhos.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        return@Button
+                                    }
+
+                                    val hashedPassword = StringUtils.hashPassword(password)
+
                                     FirebaseUtils.saveLoginOnFirestore(
                                         site = site,
                                         email = username,
-                                        senha = password,
+                                        senha = hashedPassword,
                                         categoria = selectedCategory.value,
                                         context = context
                                     ) { sucesso ->
                                         if (sucesso) {
-                                            Toast.makeText(context, "Login salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                "Login salvo com sucesso!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                             navController.popBackStack()
                                         }
                                     }
                                 } else {
-                                    Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Preencha todos os campos",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             },
                             modifier = Modifier
