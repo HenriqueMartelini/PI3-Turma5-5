@@ -222,7 +222,7 @@ fun RegisterLoginScreen(navController: NavController) {
                                     }
                                 ) {
                                     Text(
-                                        text = if (selectedCategory.value.isNotEmpty()) selectedCategory.value else "Escolha uma categoria",
+                                        text = selectedCategory.value.ifEmpty { "Escolha uma categoria" },
                                         color = Color.Black,
                                         fontSize = 16.sp,
                                     )
@@ -293,12 +293,12 @@ fun RegisterLoginScreen(navController: NavController) {
                                         return@Button
                                     }
 
-                                    val hashedPassword = StringUtils.hashPassword(password)
+                                    val encryptedPassword = StringUtils.encryptString(context, password)
 
                                     FirebaseUtils.saveLoginOnFirestore(
                                         site = site,
                                         email = username,
-                                        senha = hashedPassword,
+                                        senha = encryptedPassword,
                                         categoria = selectedCategory.value,
                                         context = context
                                     ) { sucesso ->

@@ -1,8 +1,10 @@
 package com.puc.superid.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import com.puc.superid.utils.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -12,7 +14,8 @@ data class PasswordUiState(
     val username: String = "",
     val password: String = "",
     val category: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val isEncrypted: Boolean = false
 )
 
 class EditPasswordViewModel : ViewModel() {
@@ -21,7 +24,10 @@ class EditPasswordViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
 
-    fun loadPasswordData(documentId: String) {
+    /**
+     * Carrega os dados da senha, tentando descriptografar se estiver criptografada
+     */
+    fun loadPasswordData(documentId: String, context: Context) {
         if (documentId.isBlank()) {
             Log.e("EditPasswordViewModel", "Document ID is empty.")
             return
@@ -33,14 +39,25 @@ class EditPasswordViewModel : ViewModel() {
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
                     val username = snapshot.getString("email") ?: ""
-                    val password = snapshot.getString("senha") ?: ""
-                    Log.i("FirestoreData", "Email: $username, Senha: $password")
+                    var password = snapshot.getString("senha") ?: ""
+                    var isEncrypted = false
+
+                    try {
+                        val decrypted = StringUtils.decryptString(context, password)
+                        password = decrypted
+                        isEncrypted = true
+                    } catch (e: Exception) {
+                        Log.d("EditPasswordViewModel", "Senha não está criptografada ou erro ao descriptografar: ${e.message}")
+                    }
+
+                    Log.i("FirestoreData", "Email: $username, Senha: [PROTEGIDA]")
                     _uiState.value = PasswordUiState(
                         id = documentId,
                         title = snapshot.getString("title") ?: "",
                         username = username,
                         password = password,
-                        category = snapshot.getString("categoria") ?: ""
+                        category = snapshot.getString("categoria") ?: "",
+                        isEncrypted = isEncrypted
                     )
                 } else {
                     Log.w("EditPasswordViewModel", "Documento não encontrado.")
@@ -53,7 +70,11 @@ class EditPasswordViewModel : ViewModel() {
             }
     }
 
+    /**
+     * Atualiza as credenciais, criptografando a senha se necessário
+     */
     fun updateCredentials(
+        context: Context,
         newEmail: String?,
         newPassword: String?,
         onSuccess: () -> Unit,
@@ -67,7 +88,17 @@ class EditPasswordViewModel : ViewModel() {
 
         val updates = mutableMapOf<String, Any>()
         newEmail?.let { updates["email"] = it }
-        newPassword?.let { updates["senha"] = it }
+
+        newPassword?.let {
+            try {
+                // Criptografa a nova senha antes de salvar
+                val encryptedPassword = StringUtils.encryptString(context, it)
+                updates["senha"] = encryptedPassword
+            } catch (e: Exception) {
+                onError("Falha ao criptografar a senha: ${e.message}")
+                return
+            }
+        }
 
         if (updates.isEmpty()) {
             onError("Nenhum campo para atualizar")
@@ -80,7 +111,8 @@ class EditPasswordViewModel : ViewModel() {
                 Log.d("EditPasswordViewModel", "Credenciais atualizadas com sucesso.")
                 _uiState.value = _uiState.value.copy(
                     username = newEmail ?: uiState.value.username,
-                    password = newPassword ?: uiState.value.password
+                    password = newPassword ?: uiState.value.password,
+                    isEncrypted = newPassword != null || uiState.value.isEncrypted
                 )
                 onSuccess()
             }
@@ -106,5 +138,12 @@ class EditPasswordViewModel : ViewModel() {
             Log.e("EditPasswordViewModel", "ID do documento está vazio.")
             onError("ID do documento está vazio.")
         }
+    }
+
+    /**
+     * Verifica se a criptografia está disponível no dispositivo
+     */
+    fun isEncryptionAvailable(context: Context): Boolean {
+        return StringUtils.isEncryptionAvailable(context)
     }
 }

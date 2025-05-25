@@ -108,7 +108,7 @@ fun EditPasswordScreen(
 
     LaunchedEffect(documentId) {
         if (documentId.isNotBlank()) {
-            viewModel.loadPasswordData(documentId)
+            viewModel.loadPasswordData(documentId, context)
         }
     }
 
@@ -354,6 +354,7 @@ fun EditPasswordScreen(
                         if (!canSave) return@Button
 
                         viewModel.updateCredentials(
+                            context = context,
                             newEmail = if (isEditingEmail) newEmail else null,
                             newPassword = if (isEditingPassword) newPassword else null,
                             onSuccess = {
