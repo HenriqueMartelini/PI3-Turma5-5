@@ -3,6 +3,7 @@ package com.puc.superid
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -102,14 +103,19 @@ fun MainScreen() {
     var selectedItem by remember { mutableStateOf<FirebaseUtils.LoginItem?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     val viewModel = remember { EditPasswordViewModel() }
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     DisposableEffect(Unit) {
-        FirebaseUtils.listenToLoginPartnersGlobal { fetchedLogins ->
+        val listener = FirebaseUtils.listenToUserLogins(userId) { fetchedLogins ->
             logins.clear()
             logins.addAll(fetchedLogins)
         }
-        onDispose { }
+
+        onDispose {
+            listener.remove()
+        }
     }
+
 
     Box(
         modifier = Modifier
@@ -204,12 +210,12 @@ fun MainScreen() {
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = item.login,
+                                        text = item.site,
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = Color.Black
                                     )
                                     Text(
-                                        text = "Categoria: ${item.categoria}",
+                                        text = "Categoria: ${item.category}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Gray
                                     )
@@ -226,7 +232,7 @@ fun MainScreen() {
                     AlertDialog(
                         onDismissRequest = { showDialog = false },
                         title = {
-                            Text(text = selectedItem?.login ?: "", style = MaterialTheme.typography.titleMedium)
+                            Text(text = selectedItem?.site ?: "", style = MaterialTheme.typography.titleMedium)
                         },
                         text = {
                             Text("O que deseja fazer com essa senha?")
@@ -234,8 +240,11 @@ fun MainScreen() {
                         confirmButton = {
                             TextButton(onClick = {
                                 showDialog = false
-                                val intent = Intent(context, EditPasswordActivity::class.java)
-                                intent.putExtra(EditPasswordActivity.EXTRA_DOCUMENT_ID, selectedItem?.id ?: "")
+                                val intent = Intent(context, EditPasswordActivity::class.java).apply {
+                                    putExtra(EditPasswordActivity.EXTRA_USER_ID, userId)
+                                    putExtra(EditPasswordActivity.EXTRA_CATEGORY, selectedItem?.category ?: "")
+                                    putExtra(EditPasswordActivity.EXTRA_SITE, selectedItem?.site ?: "")
+                                }
                                 context.startActivity(intent)
                             }) {
                                 Text("Editar senha")
@@ -245,13 +254,16 @@ fun MainScreen() {
                             TextButton(onClick = {
                                 selectedItem?.let { item ->
                                     viewModel.deletePassword(
-                                        documentId = item.id,
+                                        userId = userId,
+                                        category = item.category,
+                                        site = item.site,
                                         onSuccess = {
-                                            Toast.makeText(context, "Senha excluída com sucesso.", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "Login excluído com sucesso", Toast.LENGTH_SHORT).show()
                                             showDialog = false
                                         },
                                         onError = { error ->
                                             Toast.makeText(context, "Erro ao excluir: $error", Toast.LENGTH_LONG).show()
+                                            Log.e("MainActivity", "Erro ao excluir: $error")
                                         }
                                     )
                                 }

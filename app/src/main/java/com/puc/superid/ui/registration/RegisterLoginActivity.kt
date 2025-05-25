@@ -34,6 +34,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.puc.superid.R
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
@@ -95,14 +96,13 @@ fun RegisterLoginScreen(navController: NavController) {
         listOf(Color(0xFF3E8EFF), Color(0xFF6C63FF))
     )
 
-    // LaunchedEffect para carregar as categorias do Firebase
     LaunchedEffect(Unit) {
-        FirebaseUtils.fetchCategorias { categorias ->
-            Log.d("FirebaseDebug", "Categorias recebidas: $categorias")
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        FirebaseUtils.fetchUserCategories(userId) { categorias ->
             categories.clear()
             categories.addAll(categorias)
             if (categories.isNotEmpty()) {
-                selectedCategory.value = categories.first() // Define a categoria inicial
+                selectedCategory.value = categories.first()
             }
         }
     }
@@ -291,19 +291,16 @@ fun RegisterLoginScreen(navController: NavController) {
 
                                     val encryptedPassword = StringUtils.encryptString(context, password)
 
-                                    FirebaseUtils.saveLoginOnFirestore(
+                                    FirebaseUtils.saveUserLogin(
+                                        userId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
                                         site = site,
                                         email = username,
-                                        senha = encryptedPassword,
-                                        categoria = selectedCategory.value,
+                                        password = encryptedPassword,
+                                        category = selectedCategory.value,
                                         context = context
-                                    ) { sucesso ->
-                                        if (sucesso) {
-                                            Toast.makeText(
-                                                context,
-                                                "Login salvo com sucesso!",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                    ) { success ->
+                                        if (success) {
+                                            Toast.makeText(context, "Login salvo com sucesso!", Toast.LENGTH_SHORT).show()
                                             navController.popBackStack()
                                         }
                                     }

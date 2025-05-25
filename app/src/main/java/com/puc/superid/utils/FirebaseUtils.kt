@@ -6,11 +6,10 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.puc.superid.data.datasource.UserDataSource
 import com.puc.superid.data.model.User
-import com.puc.superid.data.repository.UserRepository
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -45,14 +44,11 @@ object FirebaseUtils {
         val firestore = FirebaseFirestore.getInstance()
 
         try {
-            // Cria o usuário no Firebase Authentication com o email e senha inseridos
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val uid = authResult.user?.uid.orEmpty()
 
-            // Criptografa a senha antes de armazenar no Firestore
             val hashedPassword = StringUtils.hashPassword(password)
 
-            // Cria um objeto User com as informações do usuário
             val user = User(
                 uid = uid,
                 name = name,
@@ -61,38 +57,63 @@ object FirebaseUtils {
                 password = hashedPassword
             )
 
-            // Cria a instância de UserDataSource e UserRepository para salvar os dados no Firestore
-            val userDataSource = UserDataSource(firestore)
-            val userRepository = UserRepository(userDataSource)
+            firestore.collection("users").document(uid).set(user).await()
 
-            // Salva o usuário no Firestore
-            userRepository.createUser(user)
+            createDefaultUserStructure(uid, firestore)
 
-            Log.d("FirebaseUtils", "Usuário registrado com sucesso.")
-        } catch (e: FirebaseAuthException) {
-            // Loga o erro se houver falha na criação do usuário no Firebase Authentication
-            Log.e("FirebaseUtils", "Erro ao criar usuário no Firebase Authentication: ${e.message}")
-            throw e
+            Log.d("FirebaseUtils", "Usuário registrado com sucesso com subcoleções.")
         } catch (e: Exception) {
-            // Loga erros inesperados e lança a exceção
-            Log.e("FirebaseUtils", "Erro ao salvar o usuário: ${e.message}")
+            Log.e("FirebaseUtils", "Erro ao registrar usuário: ${e.message}")
             throw e
         }
     }
 
-    fun saveLoginOnFirestore(site: String, email: String, senha: String, categoria: String, context: Context, onComplete: (Boolean) -> Unit) {
+    private fun createDefaultUserStructure(userId: String, firestore: FirebaseFirestore) {
+        val defaultCategories = listOf("App", "WebSite", "Teclado físico")
+
+        val userRef = firestore.collection("users").document(userId)
+
+        val categoriesRef = userRef.collection("categories")
+
+        defaultCategories.forEach { category ->
+            categoriesRef.document(category).set(hashMapOf(
+                "name" to category,
+                "createdAt" to System.currentTimeMillis()
+            )).addOnFailureListener { e ->
+                Log.e("FirebaseUtils", "Erro ao criar categoria padrão: ${e.message}")
+            }
+        }
+
+        Log.d("FirebaseUtils", "Estrutura padrão criada para o usuário $userId")
+    }
+
+    fun saveUserLogin(
+        userId: String,
+        site: String,
+        email: String,
+        password: String,
+        category: String,
+        context: Context,
+        onComplete: (Boolean) -> Unit
+    ) {
         val db = Firebase.firestore
+
         val loginData = hashMapOf(
+            "site" to site,
             "email" to email,
-            "senha" to senha,
-            "categoria" to categoria
+            "password" to password,
+            "createdAt" to System.currentTimeMillis()
         )
 
-        db.collection("loginPartner")
+        db.collection("users")
+            .document(userId)
+            .collection("categories")
+            .document(category)
+            .collection("logins")
             .document(site)
             .set(loginData)
             .addOnSuccessListener {
-                Log.d("FirebaseUtils", "Login salvo com sucesso.")
+                Log.d("FirebaseUtils", "Login salvo com sucesso na categoria $category")
                 onComplete(true)
             }
             .addOnFailureListener { e ->
@@ -102,61 +123,71 @@ object FirebaseUtils {
             }
     }
 
-    fun listenToLoginPartnersGlobal(callback: (List<LoginItem>) -> Unit) {
-        val db = Firebase.firestore
-        db.collection("loginPartner")
-            .addSnapshotListener { snapshot, e ->
-                if (e != null || snapshot == null) {
-                    callback(emptyList())
-                    return@addSnapshotListener
-                }
-
-                val items = snapshot.documents.mapNotNull { doc ->
-                    val login = doc.id
-                    val categoria = doc.getString("categoria") ?: "Sem categoria"
-                    LoginItem(login, categoria, id = doc.id)
-                }
-
-                callback(items)
-            }
-    }
-
-
-    fun fetchCategorias(onResult: (List<String>) -> Unit) {
-        val db = Firebase.firestore
-        db.collection("categorias")
+    fun fetchUserCategories(
+        userId: String,
+        onResult: (List<String>) -> Unit
+    ) {
+        Firebase.firestore.collection("users")
+            .document(userId)
+            .collection("categories")
             .get()
             .addOnSuccessListener { documents ->
-                Log.d("FirebaseDebug", "Número de documentos encontrados: ${documents.size()}")
-                if (documents.isEmpty) {
-                    Log.d("FirebaseDebug", "Nenhum documento encontrado na coleção 'categorias'.")
-                }
-                val categorias = documents.map { it.id }
-                onResult(categorias)
+                val categories = documents.map { it.id }
+                onResult(categories)
             }
             .addOnFailureListener { exception ->
-                Log.e("FirebaseUtils", "Erro ao carregar categorias: ${exception.message}")
+                Log.e("FirebaseUtils", "Erro ao buscar categorias: ${exception.message}")
                 onResult(emptyList())
             }
     }
 
-    fun createCategoria(
-        categoria: String,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
+    fun addUserCategory(
+        userId: String,
+        categoryName: String,
+        onComplete: (Boolean) -> Unit
     ) {
-        val db = Firebase.firestore
-        val data = mapOf("categoria" to categoria)
-
-        db.collection("categorias")
-            .document(categoria)
-            .set(data)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { exception -> onError(exception) }
+        Firebase.firestore.collection("users")
+            .document(userId)
+            .collection("categories")
+            .document(categoryName)
+            .set(hashMapOf("name" to categoryName))
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener { onComplete(false) }
     }
+
+    fun listenToUserLogins(
+    userId: String,
+    onResult: (List<LoginItem>) -> Unit
+    ): ListenerRegistration {
+        return Firebase.firestore.collection("users")
+            .document(userId)
+            .collection("categories")
+            .addSnapshotListener { categoriesSnapshot, _ ->
+                categoriesSnapshot?.documents?.forEach { categoryDoc ->
+                    val category = categoryDoc.id
+                    categoryDoc.reference.collection("logins")
+                        .addSnapshotListener { loginsSnapshot, _ ->
+                            val logins = loginsSnapshot?.documents?.map { doc ->
+                                LoginItem(
+                                    id = doc.id,
+                                    site = doc.getString("site") ?: "",
+                                    email = doc.getString("email") ?: "",
+                                    category = category,
+                                    createdAt = doc.getLong("createdAt") ?: 0
+                                )
+                            } ?: emptyList()
+                            onResult(logins)
+                        }
+                }
+            }
+    }
+
+
     data class LoginItem(
-        val login: String = "",
-        val categoria: String = "",
-        val id: String
+        val id: String,
+        val site: String,
+        val email: String,
+        val category: String,
+        val createdAt: Long = 0
     )
 }

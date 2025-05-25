@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
 import com.puc.superid.utils.FirebaseUtils
 
 class NewCategoryActivity : ComponentActivity() {
@@ -87,18 +88,19 @@ class NewCategoryActivity : ComponentActivity() {
                     Button(
                         onClick = {
                             if (categoria.isNotBlank()) {
-                                FirebaseUtils.createCategoria(
-                                    categoria = categoria,
-                                    onSuccess = {
-                                        Toast.makeText(context, "Categoria adicionada com sucesso!", Toast.LENGTH_SHORT).show()
-                                        finish()
-                                    },
-                                    onError = {
-                                        Toast.makeText(context, "Erro ao adicionar categoria", Toast.LENGTH_SHORT).show()
+                                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                                FirebaseUtils.addUserCategory(
+                                    userId = userId,
+                                    categoryName = categoria,
+                                    onComplete = { success ->
+                                        if (success) {
+                                            Toast.makeText(context, "Categoria adicionada com sucesso!", Toast.LENGTH_SHORT).show()
+                                            finish()
+                                        } else {
+                                            Toast.makeText(context, "Erro ao adicionar categoria", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 )
-                            } else {
-                                Toast.makeText(context, "Digite o nome da categoria", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier

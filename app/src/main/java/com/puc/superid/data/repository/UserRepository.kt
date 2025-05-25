@@ -8,7 +8,7 @@ import com.puc.superid.data.model.User
  *
  * @property userDataSource Instância de [UserDataSource] usada para interagir com o banco de dados
  */
-class UserRepository(private val userDataSource: UserDataSource) {
+class UserRepository(private val dataSource: UserDataSource) {
 
     /**
      * Cria um novo usuário chamando o método [createUser] no [UserDataSource].
@@ -16,6 +16,6 @@ class UserRepository(private val userDataSource: UserDataSource) {
      * @param user Objeto do tipo [User] que será salvo no banco de dados
      */
     suspend fun createUser(user: User) {
-        userDataSource.createUser(user)
+        dataSource.createUser(user.uid, user)
     }
 }

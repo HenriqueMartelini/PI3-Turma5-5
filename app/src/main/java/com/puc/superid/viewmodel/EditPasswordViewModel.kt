@@ -27,19 +27,24 @@ class EditPasswordViewModel : ViewModel() {
     /**
      * Carrega os dados da senha, tentando descriptografar se estiver criptografada
      */
-    fun loadPasswordData(documentId: String, context: Context) {
-        if (documentId.isBlank()) {
-            Log.e("EditPasswordViewModel", "Document ID is empty.")
+    fun loadPasswordData(userId: String, category: String, site: String, context: Context) {
+        if (userId.isBlank() || category.isBlank() || site.isBlank()) {
+            _uiState.value = _uiState.value.copy(error = "IDs inválidos")
             return
         }
 
-        val documentRef = db.collection("loginPartner").document(documentId)
-
-        documentRef.get()
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .collection("categories")
+            .document(category)
+            .collection("logins")
+            .document(site)
+            .get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
                     val username = snapshot.getString("email") ?: ""
-                    var password = snapshot.getString("senha") ?: ""
+                    var password = snapshot.getString("password") ?: ""
                     var isEncrypted = false
 
                     try {
@@ -47,42 +52,38 @@ class EditPasswordViewModel : ViewModel() {
                         password = decrypted
                         isEncrypted = true
                     } catch (e: Exception) {
-                        Log.d("EditPasswordViewModel", "Senha não está criptografada ou erro ao descriptografar: ${e.message}")
+                        Log.d("EditPasswordViewModel", "Senha não criptografada ou erro ao descriptografar")
                     }
 
-                    Log.i("FirestoreData", "Email: $username, Senha: [PROTEGIDA]")
                     _uiState.value = PasswordUiState(
-                        id = documentId,
-                        title = snapshot.getString("title") ?: "",
+                        id = site,
+                        title = site,
                         username = username,
                         password = password,
-                        category = snapshot.getString("categoria") ?: "",
+                        category = category,
                         isEncrypted = isEncrypted
                     )
                 } else {
-                    Log.w("EditPasswordViewModel", "Documento não encontrado.")
-                    _uiState.value = _uiState.value.copy(error = "Documento não encontrado.")
+                    _uiState.value = _uiState.value.copy(error = "Login não encontrado")
                 }
             }
             .addOnFailureListener { exception ->
-                Log.e("FirestoreError", "Erro ao carregar dados: ${exception.message}")
-                _uiState.value = _uiState.value.copy(error = "Erro ao carregar dados.")
+                _uiState.value = _uiState.value.copy(error = exception.message ?: "Erro ao carregar")
             }
     }
 
-    /**
-     * Atualiza as credenciais, criptografando a senha se necessário
-     */
     fun updateCredentials(
+        userId: String,
+        category: String,
         context: Context,
         newEmail: String?,
         newPassword: String?,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val documentId = uiState.value.id
-        if (documentId.isEmpty()) {
-            onError("ID do documento está vazio.")
+        val site = uiState.value.id
+        if (userId.isBlank() || category.isBlank() || site.isBlank()) {
+            onError("IDs inválidos")
             return
         }
 
@@ -91,24 +92,21 @@ class EditPasswordViewModel : ViewModel() {
 
         newPassword?.let {
             try {
-                // Criptografa a nova senha antes de salvar
-                val encryptedPassword = StringUtils.encryptString(context, it)
-                updates["senha"] = encryptedPassword
+                updates["password"] = StringUtils.encryptString(context, it)
             } catch (e: Exception) {
-                onError("Falha ao criptografar a senha: ${e.message}")
+                onError("Falha ao criptografar senha")
                 return
             }
         }
 
-        if (updates.isEmpty()) {
-            onError("Nenhum campo para atualizar")
-            return
-        }
-
-        db.collection("loginPartner").document(documentId)
+        db.collection("users")
+            .document(userId)
+            .collection("categories")
+            .document(category)
+            .collection("logins")
+            .document(site)
             .update(updates)
             .addOnSuccessListener {
-                Log.d("EditPasswordViewModel", "Credenciais atualizadas com sucesso.")
                 _uiState.value = _uiState.value.copy(
                     username = newEmail ?: uiState.value.username,
                     password = newPassword ?: uiState.value.password,
@@ -117,33 +115,39 @@ class EditPasswordViewModel : ViewModel() {
                 onSuccess()
             }
             .addOnFailureListener { exception ->
-                Log.e("EditPasswordViewModel", "Erro ao atualizar credenciais: ${exception.message}")
                 onError(exception.localizedMessage ?: "Erro ao atualizar")
             }
     }
 
-    fun deletePassword(documentId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        if (documentId.isNotEmpty()) {
-            db.collection("loginPartner").document(documentId)
-                .delete()
-                .addOnSuccessListener {
-                    Log.d("EditPasswordViewModel", "Login excluído com sucesso.")
-                    onSuccess()
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("EditPasswordViewModel", "Erro ao excluir credenciais: ${exception.message}")
-                    onError(exception.localizedMessage ?: "Erro ao excluir")
-                }
-        } else {
-            Log.e("EditPasswordViewModel", "ID do documento está vazio.")
-            onError("ID do documento está vazio.")
+    fun deletePassword(
+        userId: String,
+        category: String,
+        site: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (userId.isBlank() || category.isBlank() || site.isBlank()) {
+            onError("IDs inválidos")
+            return
         }
-    }
 
-    /**
-     * Verifica se a criptografia está disponível no dispositivo
-     */
-    fun isEncryptionAvailable(context: Context): Boolean {
-        return StringUtils.isEncryptionAvailable(context)
+        Log.d("DeletePassword", "Tentando excluir: users/$userId/categories/$category/logins/$site")
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .collection("categories")
+            .document(category)
+            .collection("logins")
+            .document(site)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("DeletePassword", "Documento excluído com sucesso")
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                Log.e("DeletePassword", "Erro ao excluir: ${exception.message}")
+                onError(exception.message ?: "Erro ao excluir")
+            }
     }
 }

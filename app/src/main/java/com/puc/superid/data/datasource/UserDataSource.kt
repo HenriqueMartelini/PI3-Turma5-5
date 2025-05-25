@@ -9,7 +9,7 @@ import kotlinx.coroutines.tasks.await
  *
  * @property db Instância do FirebaseFirestore usada para realizar operações no banco de dado
  */
-class UserDataSource(private val db: FirebaseFirestore) {
+class UserDataSource(private val firestore: FirebaseFirestore) {
 
     /**
      * Salva um novo usuário no Firestore.
@@ -17,9 +17,11 @@ class UserDataSource(private val db: FirebaseFirestore) {
      * @param user Objeto do tipo [User] que será salvo no banco de dados
      * @throws Exception Caso ocorra algum erro na operação de inserção
      */
-    suspend fun createUser(user: User) {
-        db.collection("users")
-            .add(user)
+    suspend fun createUser(userId: String, user: User) {
+        firestore.collection("users")
+            .document(userId) // Usa o UID como ID
+            .set(user)
             .await()
     }
+
 }
