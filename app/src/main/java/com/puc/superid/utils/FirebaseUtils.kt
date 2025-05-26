@@ -11,11 +11,19 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.puc.superid.data.model.User
 import kotlinx.coroutines.tasks.await
+import java.util.*
 
 /**
  * Classe que contém métodos do Firebase.
  */
 object FirebaseUtils {
+
+    private fun generateApiKey(): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..24)
+            .map { allowedChars.random() }
+            .joinToString("")
+    }
 
     /**
      * Registra um novo usuário no Firebase Authentication e salva seus dados no Firestore
@@ -97,11 +105,13 @@ object FirebaseUtils {
         onComplete: (Boolean) -> Unit
     ) {
         val db = Firebase.firestore
+        val apiKey = generateApiKey()
 
         val loginData = hashMapOf(
             "site" to site,
             "email" to email,
             "password" to password,
+            "apiKey" to apiKey,
             "createdAt" to System.currentTimeMillis()
         )
 
@@ -114,6 +124,7 @@ object FirebaseUtils {
             .set(loginData)
             .addOnSuccessListener {
                 Log.d("FirebaseUtils", "Login salvo com sucesso na categoria $category")
+                Log.d("FirebaseUtils", "API Key gerada: $apiKey")
                 onComplete(true)
             }
             .addOnFailureListener { e ->
@@ -156,38 +167,45 @@ object FirebaseUtils {
     }
 
     fun listenToUserLogins(
-    userId: String,
-    onResult: (List<LoginItem>) -> Unit
+        userId: String,
+        onResult: (List<LoginItem>) -> Unit
     ): ListenerRegistration {
         return Firebase.firestore.collection("users")
             .document(userId)
             .collection("categories")
             .addSnapshotListener { categoriesSnapshot, _ ->
+                val logins = mutableListOf<LoginItem>()
+
                 categoriesSnapshot?.documents?.forEach { categoryDoc ->
                     val category = categoryDoc.id
                     categoryDoc.reference.collection("logins")
-                        .addSnapshotListener { loginsSnapshot, _ ->
-                            val logins = loginsSnapshot?.documents?.map { doc ->
-                                LoginItem(
-                                    id = doc.id,
-                                    site = doc.getString("site") ?: "",
-                                    email = doc.getString("email") ?: "",
+                        .get()
+                        .addOnSuccessListener { loginsSnapshot ->
+                            loginsSnapshot.documents.forEach { loginDoc ->
+                                logins.add(LoginItem(
+                                    id = loginDoc.id,
+                                    site = loginDoc.getString("site") ?: "",
+                                    email = loginDoc.getString("email") ?: "",
                                     category = category,
-                                    createdAt = doc.getLong("createdAt") ?: 0
-                                )
-                            } ?: emptyList()
+                                    createdAt = loginDoc.getLong("createdAt") ?: 0,
+                                    apiKey = loginDoc.getString("apiKey") ?: ""
+                                ))
+                            }
                             onResult(logins)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("FirebaseUtils", "Erro ao buscar logins: ${e.message}")
                         }
                 }
             }
     }
-
 
     data class LoginItem(
         val id: String,
         val site: String,
         val email: String,
         val category: String,
-        val createdAt: Long = 0
+        val createdAt: Long = 0,
+        val apiKey: String = ""
     )
 }
