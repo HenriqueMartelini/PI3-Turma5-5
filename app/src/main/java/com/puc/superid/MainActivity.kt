@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -104,11 +105,18 @@ fun MainScreen() {
     var showDialog by remember { mutableStateOf(false) }
     val viewModel = remember { EditPasswordViewModel() }
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val expandedCategories = remember { mutableStateMapOf<String, Boolean>() }
 
     DisposableEffect(Unit) {
         val listener = FirebaseUtils.listenToUserLogins(userId) { fetchedLogins ->
             logins.clear()
             logins.addAll(fetchedLogins)
+
+            fetchedLogins.distinctBy { it.category }.forEach {
+                if (!expandedCategories.containsKey(it.category)) {
+                    expandedCategories[it.category] = false
+                }
+            }
         }
 
         onDispose {
@@ -116,6 +124,7 @@ fun MainScreen() {
         }
     }
 
+    val loginsByCategory = logins.groupBy { it.category }
 
     Box(
         modifier = Modifier
@@ -186,48 +195,97 @@ fun MainScreen() {
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                 ) {
-                    items(logins) { item ->
-                        Column(modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedItem = item
-                                showDialog = true
-                            }
-                        ) {
-                            Row(
+                    loginsByCategory.keys.sorted().forEach { category ->
+                        val categoryLogins = loginsByCategory[category] ?: emptyList()
+
+                        item {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFFD3D3D3))
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .clickable {
+                                        expandedCategories[category] = !(expandedCategories[category] ?: false)
+                                    }
+                                    .background(Color(0xFF1A1A2E))
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(40.dp),
-                                    tint = Color.DarkGray
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (expandedCategories[category] == true)
+                                                R.drawable.folder_open
+                                            else
+                                                R.drawable.folder_closed
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
                                     Text(
-                                        text = item.site,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.Black
+                                        text = category,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White,
+                                        modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        text = "Categoria: ${item.category}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Gray
+                                        text = "${categoryLogins.size} itens",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.LightGray
                                     )
                                 }
                             }
-                            HorizontalDivider(
-                                thickness = 1.dp,
-                                color = Color.LightGray
-                            )
+                        }
+
+                        if (expandedCategories[category] == true) {
+                            items(categoryLogins.sortedBy { it.site }) { item ->
+                                Column(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedItem = item
+                                        showDialog = true
+                                    }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Color(0xFFD3D3D3))
+                                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AccountCircle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(40.dp),
+                                            tint = Color.DarkGray
+                                        )
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text(
+                                                text = item.site,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = Color.Black
+                                            )
+                                            Text(
+                                                text = item.email,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider(
+                                        thickness = 1.dp,
+                                        color = Color.LightGray
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+
                 if (showDialog && selectedItem != null) {
                     AlertDialog(
                         onDismissRequest = { showDialog = false },
