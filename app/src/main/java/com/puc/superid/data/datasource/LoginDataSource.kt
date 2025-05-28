@@ -6,6 +6,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.puc.superid.utils.DeviceUtils
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
@@ -14,14 +15,14 @@ object LoginDataSource {
     private val db by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
 
-    suspend fun authenticateQrCodeLogin(encodedLoginData: String, context: Context): Boolean {
+    suspend fun authenticateQrCodeLogin(loginToken: String, context: Context): Boolean {
         return try {
-            val loginDataJson = String(android.util.Base64.decode(encodedLoginData, android.util.Base64.DEFAULT))
-            val loginData = org.json.JSONObject(loginDataJson)
+            if (loginToken.isBlank()) {
+                Log.e("QRLogin", "Token vazio")
+                return false
+            }
 
-            val token = loginData.getString("token")
-
-            val loginRequestRef = db.collection(LOGIN_REQUESTS).document(token)
+            val loginRequestRef = db.collection(LOGIN_REQUESTS).document(loginToken)
             val loginRequestDoc = loginRequestRef.get().await()
 
             if (!loginRequestDoc.exists()) {
@@ -46,12 +47,14 @@ object LoginDataSource {
                 return false
             }
 
+            val deviceId = DeviceUtils.getIMEI(context)
+
             val updateData = mapOf(
                 "status" to "authenticated",
                 "authenticatedAt" to FieldValue.serverTimestamp(),
-                "deviceId" to getDeviceId(context),
+                "deviceId" to deviceId,
                 "user" to currentUser.uid,
-                "userEmail" to currentUser.email
+                "userEmail" to currentUser.email,
             )
 
             loginRequestRef.update(updateData).await()
@@ -63,11 +66,4 @@ object LoginDataSource {
             false
         }
     }
-
-    @SuppressLint("HardwareIds")
-    private fun getDeviceId(context: Context): String =
-        android.provider.Settings.Secure.getString(
-            context.contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
-        )
 }
