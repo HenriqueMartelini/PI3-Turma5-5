@@ -13,6 +13,7 @@ Pré-requisitos
 •	Android Studio instalado.
 •	Conta no Firebase para gerar as credenciais e configurar o Firebase no projeto.
 
+Passos para testar o código:
 Passo 1: Clonar o repositório
 
 Clone o repositório para o seu ambiente local:
@@ -25,6 +26,21 @@ Acesse o diretório do projeto e execute o seguinte comando para baixar todas as
 Se você estiver utilizando o Android Studio, ao abrir o projeto,
 o Gradle irá automaticamente baixar as dependências necessárias.
 
+Passo 3: Rodar o app em um emulador
+
+Passos para testar o APP:
+Passo1: Instalar o APK em um dspositivo android:
+https://drive.google.com/file/d/1zPx6l1zxwoGc9PQs6S7kq4r4KgOwxNBP/view?usp=sharing
+Cada dispostivo exige um passo a passo de instalação de arquivos APK, mas em suma, ele pedirá um destino
+onde deseja copiar o APK, e então, acesse essa pasta, clique sobre o APK e isntale o APP. Talvez o dispositivo
+classifique o APP como risco eminente para o dispoitivo, e você terá de aceitar, mudar as configurações para aceitar
+o dowloand do mesmo, que assume os riscos. Após isto, o app será instalado e você poderá usá-lo normalmente. 
+
+Passo 2: Criar uma conta usando um email válido, após isto você terá de verificar seu email, caso ele não chegue,
+use a função de reenviar o email. E então, você poderá logar e usar o APP à vontade.
+
+Passo 3: Acesse, clone e siga os passos do repositório:
+https://github.com/HenriqueMartelini/PartnerWebSite-PI3-Turma5-5.git
 
 ### **Configuração do Firebase**
 

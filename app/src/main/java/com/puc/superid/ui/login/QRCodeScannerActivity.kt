@@ -32,6 +32,15 @@ import com.puc.superid.ui.theme.SuperidTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+
+/**
+ * Activity responsável por exibir a tela de scanner de QR Code.
+ *
+ * Essa tela usa a biblioteca CameraX para capturar a imagem da câmera,
+ * processa o QR Code usando a MLKit e executa a autenticação via `LoginDataSource`.
+ */
+
+
 class QRCodeScannerActivity : ComponentActivity() {
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -63,6 +72,14 @@ class QRCodeScannerActivity : ComponentActivity() {
         }
     }
 }
+
+
+/**
+ * Tela que exibe a interface de scanner e o estado de processamento do QR Code.
+ *
+ * @param onCodeScanned Callback executado quando o QR Code é lido com sucesso e autenticado.
+ */
+
 
 @Composable
 fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
@@ -132,12 +149,27 @@ fun QRCodeScannerScreen(onCodeScanned: () -> Unit) {
     }
 }
 
+
+/**
+ * Representa os estados de processamento do QR Code.
+ */
+
 sealed class ProcessingState {
     object Idle : ProcessingState()
     object Processing : ProcessingState()
     object Success : ProcessingState()
     class Error(val message: String) : ProcessingState()
 }
+
+
+
+/**
+ * Composable que exibe a visualização da câmera e processa QR Codes usando a MLKit.
+ *
+ * @param onQrCodeScanned Callback chamado quando um QR Code é identificado.
+ * @param modifier Modificador para customizar o layout do PreviewView.
+ */
+
 
 @Composable
 fun CameraPreview(
@@ -203,6 +235,14 @@ fun CameraPreview(
         modifier = modifier
     )
 }
+
+
+/**
+ * Função auxiliar para processar a imagem da câmera e detectar QR Codes usando MLKit.
+ *
+ * @param imageProxy Imagem da câmera a ser analisada.
+ * @param onQrCodeScanned Callback chamado quando um QR Code é detectado.
+ */
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 private fun processImage(

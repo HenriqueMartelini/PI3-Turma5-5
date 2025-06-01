@@ -52,6 +52,13 @@ class RegisterLoginActivity : ComponentActivity() {
     }
 }
 
+
+/**
+ * NavHost que gerencia a navegação entre as telas principais do app.
+ *
+ * @param navController controlador de navegação para trocar telas.
+ */
+
 @Composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "register_login") {
@@ -78,6 +85,16 @@ fun AppNavHost(navController: NavHostController) {
         }
     }
 }
+
+
+/**
+ * Tela principal para adicionar um novo login com usuário, senha, site e categoria.
+ *
+ * Exibe um formulário para entrada de dados, valida os campos, encripta a senha e salva
+ * os dados no Firebase. Permite também selecionar ou adicionar categorias.
+ *
+ * @param navController controlador de navegação para trocar telas.
+ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -338,6 +355,15 @@ fun RegisterLoginScreen(navController: NavController) {
         }
     }
 }
+
+/**
+ * Campo de entrada customizado para textos simples ou senha.
+ *
+ * @param label texto do rótulo do campo.
+ * @param value valor atual do campo.
+ * @param onValueChange callback para atualizar o valor do campo.
+ * @param isPassword define se o campo deve ocultar o texto (senha).
+ */
 
 @Composable
 fun CustomInputField(

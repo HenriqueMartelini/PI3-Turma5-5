@@ -8,6 +8,19 @@ import com.puc.superid.utils.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+
+/**
+ * Estado da interface de edição de senha.
+ *
+ * @property id Identificador da senha (normalmente o site)
+ * @property title Título da senha (nome do site ou serviço)
+ * @property username Nome de usuário ou email associado à senha
+ * @property password Senha armazenada, descriptografada se possível
+ * @property category Categoria à qual a senha pertence
+ * @property error Mensagem de erro, se houver
+ * @property isEncrypted Indica se a senha estava criptografada no banco de dados
+ */
+
 data class PasswordUiState(
     val id: String = "",
     val title: String = "",
@@ -25,7 +38,17 @@ class EditPasswordViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
 
     /**
-     * Carrega os dados da senha, tentando descriptografar se estiver criptografada
+     * Carrega os dados da senha do Firestore e tenta descriptografar a senha.
+     *
+     * Caso a senha esteja criptografada, será feita a tentativa de descriptografia.
+     * Se não estiver, a senha será usada como está.
+     *
+     * Atualiza o estado da UI com os dados carregados ou mensagem de erro.
+     *
+     * @param userId ID do usuário no Firestore
+     * @param category Categoria onde a senha está salva
+     * @param site Identificador único da senha (site)
+     * @param context Contexto Android necessário para a descriptografia
      */
     fun loadPasswordData(userId: String, category: String, site: String, context: Context) {
         if (userId.isBlank() || category.isBlank() || site.isBlank()) {
@@ -71,6 +94,22 @@ class EditPasswordViewModel : ViewModel() {
                 _uiState.value = _uiState.value.copy(error = exception.message ?: "Erro ao carregar")
             }
     }
+
+    /**
+     * Atualiza o email e/ou senha de uma credencial armazenada no Firestore.
+     *
+     * Se a nova senha for informada, ela será criptografada antes de salvar.
+     *
+     * Atualiza o estado da UI após sucesso e dispara callbacks de sucesso ou erro.
+     *
+     * @param userId ID do usuário no Firestore
+     * @param category Categoria da senha
+     * @param context Contexto Android necessário para criptografia
+     * @param newEmail Novo email ou username (opcional)
+     * @param newPassword Nova senha (opcional)
+     * @param onSuccess Callback chamado em caso de sucesso
+     * @param onError Callback chamado em caso de erro, com mensagem de erro
+     */
 
     fun updateCredentials(
         userId: String,
@@ -118,6 +157,18 @@ class EditPasswordViewModel : ViewModel() {
                 onError(exception.localizedMessage ?: "Erro ao atualizar")
             }
     }
+
+    /**
+     * Exclui uma senha (documento) do Firestore.
+     *
+     * Dispara callbacks para informar sucesso ou erro na exclusão.
+     *
+     * @param userId ID do usuário no Firestore
+     * @param category Categoria onde a senha está salva
+     * @param site Identificador único da senha (site)
+     * @param onSuccess Callback chamado em caso de exclusão bem-sucedida
+     * @param onError Callback chamado em caso de erro na exclusão, com mensagem de erro
+     */
 
     fun deletePassword(
         userId: String,

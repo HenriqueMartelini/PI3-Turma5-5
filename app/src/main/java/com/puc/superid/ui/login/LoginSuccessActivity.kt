@@ -16,6 +16,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.puc.superid.R
 
+
+/**
+ * Activity que representa a tela de sucesso de login.
+ *
+ * Esta tela é exibida após o login ser autenticado com sucesso.
+ */
+
+
 class LoginSuccessActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)

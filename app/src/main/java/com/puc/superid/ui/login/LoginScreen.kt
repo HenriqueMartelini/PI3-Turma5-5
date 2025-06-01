@@ -40,7 +40,15 @@ class LoginScreen : ComponentActivity() {
     }
 }
 
-
+/**
+ * - Exibe campos de e-mail e senha.
+ * - Permite reenviar e-mail de verificação.
+ * - Fornece acesso à recuperação de senha.
+ * - Chama o ViewModel para realizar o login.
+ *
+ * @param navController Controlador de navegação para permitir a transição de telas.
+ * @param onLoginSuccess Callback chamado quando o login for bem-sucedido.
+ */
 
 @Composable
 fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit) {

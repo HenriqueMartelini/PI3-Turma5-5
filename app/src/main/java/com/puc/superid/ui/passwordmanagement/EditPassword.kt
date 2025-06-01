@@ -29,11 +29,17 @@ import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.StringUtils.isValidEmail
 import com.puc.superid.viewmodel.EditPasswordViewModel
 
+
+/**
+ * Activity que exibe a tela para editar login (email) e senha de um site/categoria específico do usuário.
+ * Recebe via Intent os parâmetros necessários para carregar os dados e iniciar a edição.
+ */
+
 class EditPasswordActivity : ComponentActivity() {
     companion object {
-        const val EXTRA_USER_ID = "user_id"
-        const val EXTRA_CATEGORY = "category"
-        const val EXTRA_SITE = "site"
+        const val EXTRA_USER_ID = "user_id"         /** Chave para obter o ID do usuário da Intent */
+        const val EXTRA_CATEGORY = "category"       /** Chave para obter a categoria da Intent */
+        const val EXTRA_SITE = "site"               /** Chave para obter o nome do site da Intent */
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +61,18 @@ class EditPasswordActivity : ComponentActivity() {
         }
     }
 }
+
+
+/**
+ * Composable que mostra a tela de edição do login e senha.
+ *
+ * @param userId ID do usuário para buscar e atualizar os dados.
+ * @param category Categoria do login (ex: "WebSite", "Email").
+ * @param site Nome do site ou serviço que o login representa.
+ * @param onBack Função executada ao voltar da tela.
+ * @param viewModel ViewModel que gerencia os dados e lógica da edição.
+ */
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

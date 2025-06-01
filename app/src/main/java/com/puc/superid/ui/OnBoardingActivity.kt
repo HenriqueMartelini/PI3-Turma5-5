@@ -39,6 +39,16 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import androidx.compose.ui.util.lerp
 
+
+/**
+ * Activity responsável por exibir o fluxo de onboarding para novos usuários.
+ * Apresenta um conjunto de telas informativas que explicam as principais funcionalidades do aplicativo,
+ * além de solicitar a aceitação dos Termos de Uso na última tela antes de permitir o início do uso do app.
+ *
+ * @constructor Inicializa a activity e configura a tela de conteúdo com a [OnboardingScreen].
+ */
+
+
 class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +63,29 @@ class OnboardingActivity : ComponentActivity() {
     }
 }
 
+
+/**
+ * Modelo de dados que representa uma página do onboarding.
+ *
+ * @property image Recurso drawable da imagem exibida na página.
+ * @property title Título descritivo da página.
+ * @property description Texto explicativo da página.
+ */
+
+
 data class OnboardingPage(val image: Int, val title: String, val description: String)
+
+
+
+/**
+ * Composable que exibe a tela de onboarding contendo múltiplas páginas,
+ * um indicador de página, checkbox para aceitação dos Termos de Uso,
+ * e um botão para navegar entre as páginas ou iniciar o app.
+ *
+ * @param onStartClick Lambda chamado quando o usuário clica em "Começar" após aceitar os termos.
+ * @param onTermsClick Lambda chamado quando o usuário clica para visualizar os Termos de Uso.
+ */
+
 
 @Composable
 fun OnboardingScreen(onStartClick: () -> Unit, onTermsClick: () -> Unit) {
@@ -231,6 +263,15 @@ fun OnboardingScreen(onStartClick: () -> Unit, onTermsClick: () -> Unit) {
         }
     }
 }
+
+
+/**
+ * Composable que exibe o conteúdo de uma página individual do onboarding,
+ * mostrando o título e a descrição com a fonte personalizada.
+ *
+ * @param page Objeto [OnboardingPage] contendo os dados da página.
+ * @param fontFamily Família de fontes usada para os textos.
+ */
 
 @Composable
 fun OnboardingPageView(page: OnboardingPage, fontFamily: FontFamily) {

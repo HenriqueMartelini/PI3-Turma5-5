@@ -27,6 +27,14 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.puc.superid.utils.FirebaseUtils
 
+
+/**
+ * Activity para cadastro de uma nova categoria para o usuário.
+ *
+ * Exibe uma tela com campo de texto para o nome da categoria e botão para salvar.
+ * Ao salvar, chama FirebaseUtils para adicionar a categoria ao Firestore associada ao usuário atual.
+ */
+
 class NewCategoryActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,6 +93,14 @@ class NewCategoryActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    /**
+                     * Botão que salva a categoria no Firestore.
+                     *
+                     * Verifica se o campo não está vazio e obtém o ID do usuário atual do FirebaseAuth.
+                     * Em seguida, chama FirebaseUtils.addUserCategory passando a categoria.
+                     * Exibe Toasts para sucesso ou erro e finaliza a Activity em caso de sucesso.
+                     */
+
                     Button(
                         onClick = {
                             if (categoria.isNotBlank()) {
@@ -127,6 +143,15 @@ class NewCategoryActivity : ComponentActivity() {
             }
         }
     }
+
+    /**
+     * Campo de texto customizado para entrada de dados.
+     *
+     * @param label Texto do rótulo do campo.
+     * @param value Valor atual do campo.
+     * @param onValueChange Callback disparado ao alterar o texto.
+     * @param isPassword Indica se o campo deve mascarar a entrada como senha.
+     */
 
     @Composable
     fun CustomInputField(

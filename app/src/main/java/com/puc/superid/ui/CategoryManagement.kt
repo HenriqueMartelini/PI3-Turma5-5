@@ -24,10 +24,27 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.puc.superid.ui.theme.SuperidTheme
 import com.puc.superid.utils.FirebaseUtils
 
+
+/**
+ * Representa uma categoria com seu ID e nome.
+ *
+ * @property id Identificador único da categoria.
+ * @property nome Nome exibido da categoria.
+ */
+
+
 data class CategoriaItem(
     val id: String,
     val nome: String
 )
+
+/**
+ * Activity responsável pelo gerenciamento das categorias do usuário.
+ *
+ * Exibe uma lista das categorias existentes, permitindo seleção e exclusão,
+ * respeitando regras de negócio (não excluir categoria padrão "WebSite" e impedir exclusão
+ * se existirem logins associados).
+ */
 
 class CategoryManagementActivity : ComponentActivity() {
     private val db = FirebaseFirestore.getInstance()
@@ -41,6 +58,15 @@ class CategoryManagementActivity : ComponentActivity() {
             }
         }
     }
+
+
+    /**
+     * Tela composable que exibe a lista de categorias do usuário.
+     *
+     * Inclui lógica para seleção de categoria e exibição de diálogo para confirmação
+     * da exclusão com as devidas validações.
+     */
+
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable

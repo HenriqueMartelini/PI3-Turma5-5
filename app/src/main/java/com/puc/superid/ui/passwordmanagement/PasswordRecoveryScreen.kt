@@ -17,6 +17,19 @@ import com.puc.superid.viewmodel.PasswordRecoveryViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
+
+/**
+ * Tela para recuperação de senha via e-mail.
+ *
+ * Exibe um campo para o usuário digitar seu e-mail, um botão para enviar o link de recuperação,
+ * e realiza a interação com o [PasswordRecoveryViewModel].
+ *
+ * @param viewModel ViewModel que gerencia o estado e lógica da recuperação de senha.
+ * @param navController Controlador de navegação para gerenciar as transições de telas.
+ * @param onLinkSent Callback chamado após o envio bem-sucedido do link de recuperação.
+ */
+
+
 @Composable
 fun PasswordRecoveryScreen(
     viewModel: PasswordRecoveryViewModel = viewModel(),
@@ -105,6 +118,16 @@ fun PasswordRecoveryScreen(
         }
     }
 }
+
+
+/**
+ * Botão estilizado com fundo em gradiente horizontal.
+ *
+ * @param text Texto exibido no botão.
+ * @param gradient Gradiente de cores usado como fundo do botão.
+ * @param modifier Modificador do Compose para customização do botão.
+ * @param onClick Callback executado quando o botão é clicado.
+ */
 
 @Composable
 fun GradientButton(

@@ -10,10 +10,30 @@ import com.puc.superid.utils.DeviceUtils
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
+/**
+ * Objeto responsável por lidar com autenticação de login via QR Code.
+ *
+ * Esta classe fornece métodos para autenticar o login de usuários escaneando um QR Code
+ * gerado pelo site parceiro, atualizando o status da requisição de login no Firestore.
+ */
 object LoginDataSource {
     private const val LOGIN_REQUESTS = "loginRequests"
     private val db by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
+
+    /**
+     * Autentica uma solicitação de login usando um token de QR Code.
+     *
+     * - Verifica se o token está presente e válido.
+     * - Busca a requisição de login correspondente no Firestore.
+     * - Checa se a requisição expirou ou já foi autenticada.
+     * - Caso válido, atualiza o status para "authenticated", registra o deviceId
+     *   e o usuário autenticado.
+     *
+     * @param loginToken Token recebido após escanear o QR Code
+     * @param context Context necessário para obter o IMEI do dispositivo
+     * @return true se a autenticação for bem-sucedida, false caso contrário
+     */
 
     suspend fun authenticateQrCodeLogin(loginToken: String, context: Context): Boolean {
         return try {

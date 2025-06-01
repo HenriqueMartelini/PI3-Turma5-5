@@ -1,5 +1,6 @@
 package com.puc.superid.viewmodel
 
+import LoginUiState
 import android.util.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
@@ -9,13 +10,35 @@ class LoginViewModel : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
 
+    /**
+     * Atualiza o email no estado da UI e limpa o erro de email.
+     *
+     * @param email Novo valor do email
+     */
+
     fun onEmailChange(email: String) {
         uiState = uiState.copy(email = email, emailError = false)
     }
 
+    /**
+     * Atualiza a senha no estado da UI e limpa o erro de senha.
+     *
+     * @param password Novo valor da senha
+     */
+
     fun onPasswordChange(password: String) {
         uiState = uiState.copy(password = password, passwordError = false)
     }
+
+    /**
+     * Realiza o login do usuário com email e senha usando FirebaseAuth.
+     *
+     * Valida o formato do email e o tamanho da senha antes da autenticação.
+     * Verifica se o email foi verificado antes de chamar sucesso.
+     *
+     * @param onSuccess Callback chamado quando o login é bem-sucedido e email verificado
+     * @param onFailure Callback chamado em caso de erro, com mensagem de erro
+     */
 
     fun login(
         onSuccess: () -> Unit,
@@ -51,6 +74,18 @@ class LoginViewModel : ViewModel() {
             }
     }
 
+
+    /**
+     * Reenvia o email de verificação para o usuário autenticado.
+     *
+     * Tenta autenticar o usuário com email e senha e, caso não esteja verificado,
+     * envia o email de verificação.
+     *
+     * @param email Email do usuário
+     * @param password Senha do usuário
+     * @param onResult Callback que retorna a mensagem de sucesso ou erro
+     */
+
     fun resendVerificationToEmail(email: String, password: String, onResult: (String) -> Unit) {
         if (email.isBlank() || password.isBlank()) {
             onResult("Preencha o e-mail e a senha.")
@@ -80,11 +115,3 @@ class LoginViewModel : ViewModel() {
             }
     }
 }
-
-data class LoginUiState(
-    val email: String = "",
-    val password: String = "",
-    val emailError: Boolean = false,
-    val passwordError: Boolean = false,
-    val errorMessage: String? = null
-)

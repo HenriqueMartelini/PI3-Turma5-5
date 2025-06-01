@@ -1,5 +1,6 @@
 package com.puc.superid.utils
 
+import LoginItem
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
@@ -14,9 +15,17 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 
 /**
- * Classe que contém métodos do Firebase.
+ * Objeto utilitário com métodos para interagir com Firebase Authentication e Firestore,
+ * facilitando operações como cadastro de usuário, manipulação de categorias e logins.
  */
 object FirebaseUtils {
+
+    /**
+     * Gera uma chave API aleatória composta por letras maiúsculas, minúsculas e dígitos,
+     * com tamanho fixo de 24 caracteres.
+     *
+     * @return String contendo a chave gerada.
+     */
 
     private fun generateApiKey(): String {
         val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
@@ -26,20 +35,19 @@ object FirebaseUtils {
     }
 
     /**
-     * Registra um novo usuário no Firebase Authentication e salva seus dados no Firestore
+     * Registra um novo usuário no Firebase Authentication com email e senha,
+     * e salva os dados do usuário no Firestore, incluindo a senha criptografada.
      *
-     * Método responsável pelas seguitnes funções:
-     * 1. Criação do usuário no Firebase Authentication usando email e senha
-     * 2. Criptografar a senha antes de salvar no Firestore
-     * 3. Salva os dados do usuário no Firestore
+     * Também cria uma estrutura padrão de categorias para o usuário.
      *
-     * @param name Nome do usuário
-     * @param email Email do usuário.
-     * @param password Senha do usuário
-     * @param imei IMEI do dispositivo do usuário
-     * @param context Contexto da aplicação
-     * @throws FirebaseAuthException Lançado se ocorrer um erro ao criar o usuário no Firebase Authentication
-     * @throws Exception Lançado se ocorrer qualquer outro erro ao salvar o usuário
+     * @param name Nome completo do usuário.
+     * @param email Email para cadastro.
+     * @param password Senha para cadastro (será criptografada para salvar no Firestore).
+     * @param imei Identificador IMEI do dispositivo do usuário.
+     * @param context Contexto da aplicação para uso em possíveis mensagens.
+     *
+     * @throws FirebaseAuthException Caso falhe a criação no Firebase Authentication.
+     * @throws Exception Caso ocorra erro ao salvar os dados no Firestore.
      */
     suspend fun registerUserInFirestore(
         name: String,
@@ -76,6 +84,15 @@ object FirebaseUtils {
         }
     }
 
+
+    /**
+     * Cria categorias padrão ("App", "WebSite", "Teclado físico") na subcoleção "categories"
+     * para um usuário recém-registrado no Firestore.
+     *
+     * @param userId ID do usuário no Firebase Authentication / Firestore.
+     * @param firestore Instância do FirebaseFirestore.
+     */
+
     private fun createDefaultUserStructure(userId: String, firestore: FirebaseFirestore) {
         val defaultCategories = listOf("App", "WebSite", "Teclado físico")
 
@@ -94,6 +111,21 @@ object FirebaseUtils {
 
         Log.d("FirebaseUtils", "Estrutura padrão criada para o usuário $userId")
     }
+
+
+    /**
+     * Salva um novo login (credenciais) para o usuário em uma categoria específica no Firestore.
+     *
+     * Gera uma API Key aleatória para cada login salvo.
+     *
+     * @param userId ID do usuário.
+     * @param site Nome do site ou serviço do login.
+     * @param email Email usado no login.
+     * @param password Senha do login (sem criptografia).
+     * @param category Categoria onde o login será salvo.
+     * @param context Contexto para exibir mensagens Toast.
+     * @param onComplete Callback chamado com true em caso de sucesso, false em falha.
+     */
 
     fun saveUserLogin(
         userId: String,
@@ -134,6 +166,13 @@ object FirebaseUtils {
             }
     }
 
+    /**
+     * Busca as categorias cadastradas para um usuário no Firestore.
+     *
+     * @param userId ID do usuário.
+     * @param onResult Callback que recebe uma lista de nomes de categorias (Strings).
+     */
+
     fun fetchUserCategories(
         userId: String,
         onResult: (List<String>) -> Unit
@@ -152,6 +191,14 @@ object FirebaseUtils {
             }
     }
 
+    /**
+     * Adiciona uma nova categoria para o usuário no Firestore.
+     *
+     * @param userId ID do usuário.
+     * @param categoryName Nome da categoria a ser adicionada.
+     * @param onComplete Callback que indica sucesso (true) ou falha (false).
+     */
+
     fun addUserCategory(
         userId: String,
         categoryName: String,
@@ -165,6 +212,15 @@ object FirebaseUtils {
             .addOnSuccessListener { onComplete(true) }
             .addOnFailureListener { onComplete(false) }
     }
+
+    /**
+     * Escuta em tempo real as alterações nas categorias e logins do usuário.
+     * Retorna uma [ListenerRegistration] para controle do listener.
+     *
+     * @param userId ID do usuário.
+     * @param onResult Callback que retorna uma lista atualizada de [LoginItem].
+     * @return ListenerRegistration para remover o listener posteriormente.
+     */
 
     fun listenToUserLogins(
         userId: String,
@@ -199,13 +255,4 @@ object FirebaseUtils {
                 }
             }
     }
-
-    data class LoginItem(
-        val id: String,
-        val site: String,
-        val email: String,
-        val category: String,
-        val createdAt: Long = 0,
-        val apiKey: String = ""
-    )
 }

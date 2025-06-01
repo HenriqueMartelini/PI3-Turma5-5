@@ -1,5 +1,6 @@
 package com.puc.superid
 
+import LoginItem
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -72,6 +73,10 @@ import com.puc.superid.viewmodel.EditPasswordViewModel
 import com.puc.superid.ui.CategoryManagementActivity
 import kotlinx.coroutines.launch
 
+/**
+ * Verifica se o usuário está acessando o app pela primeira vez e exibe a tela de onboarding.
+ * Se não for a primeira vez, realiza logout e redireciona para a tela de login.
+ */
 class MainActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -83,8 +88,8 @@ class MainActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
         sharedPreferences = getSharedPreferences("AppPreferences", MODE_PRIVATE)
 
-        val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
-
+        //val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
+        val isFirstTime = true
         if (isFirstTime) {
             sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
             startActivity(Intent(this, OnboardingActivity::class.java))
@@ -100,9 +105,9 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val logins = remember { mutableStateListOf<FirebaseUtils.LoginItem>() }
+    val logins = remember { mutableStateListOf<LoginItem>() }
     val context = LocalContext.current
-    var selectedItem by remember { mutableStateOf<FirebaseUtils.LoginItem?>(null) }
+    var selectedItem by remember { mutableStateOf<LoginItem?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     val viewModel = remember { EditPasswordViewModel() }
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
